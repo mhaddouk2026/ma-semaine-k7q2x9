@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ma semaine">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAElklEQVR4nO3dQXKcMBRFUTmVfcRTrypemlcVT72UDKjClNsPCwT670v3TN2h1eIiSLtNP/35+68A3/kVPQD4Ig5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckIgDEnFAIg5IxAGJOCARByTigEQckH5HDyDMx9tL/YOfX9/vG4mtp3luUnuohn2TtDJ+HBc28WjsSoaN49YmHg1ZyYBxdM5ia7BEhoojMIutYRIZJA6TLLYGSCR9HIZZbKVOJPebYOZllAwj3JF15Ug36RmXkJQrR7oySs4x54sj4ywv0o0802kl3eQqWU4xaVaOYcooeV5LjjiyzGa9FK8oQRwp5vEE/9flfs1x1Qyup/nGDV61nccNGrKO474dcGLLXzYyw6dDEpxW7nB0fzw+3naPXsh35eizbv/4LDv/fPjFw3Tl6Haxtr9XWn56iOfFqWMcnY9I9ZjOR7NhH45xXKhyxue8pPiRXRyXH0An+qgsI2qo3XhdkIZ/Uvzj7aXyYVeM6Hs+i9ZEf9S07NHGa0y3g/tWRqeVPvPe8iz+I7yWURzdnJt9n33WjUscnaf+6NOZD+8mLnH0V78DTHZVfxZxRM1+zfM6j+1uFnHAU3wcDoeIp/CZiY8jUMtvXmYwdRzYFxxHitslBC4esWcWVg5Ik8bR/jHBGUTGEX41nkLgLE26cij0ujVjHOfOEROeWWaMQ1mWDRaPFXFACouDA7Re1FyxckCaLg51Xbk9OtWROts16XRxoB5xQCIOSMQBiTggEQck4oBEHJCIAxJxQJoujpq3xmveYp/BdHGgXlgcs/0Sq0XUXLFyQCKOT8sBypK2mjEO7uxTacY4drBsbEXGwZ6oEThLk64c5vcEMzFpHKgRHEeKuxukuE/EHVg5IE0dh/PdBB3Ex8H/WZTwmYmPA7Ys4og6RJzvJhi+bBSTOEKkuGFcLJc4Ou8A83uCmeToEkdP3NmnklEcfWa/5Vn8R3gtozju9vz63v4tXTUbGYbXFwCWe950Ovptj1HfDln/1H3YrRyXz86JPX3622gbWZVRDOO41uk1YOZ3zVeOcXT+jnj1mM59uC0bxTOO0nGm9gto+ekhhmUUwwvSratm/9upP7Tx9i0c3bgD05Xjbu0fE5zhosR65Sg3HJ2NG7xqO48bNOQeRxn6GHUuo6Q4rZjP4Gn+rytBHCXDPB6V4hXliKMkmc1KWV5LgmuOL1JfgmTJYpFm5Vjlmt+tdCPPF0dJOMsl55jznVa2UpxiMmaxSLlyrPzn3X+EO3KvHCvDJSR1FotB4liYJDJAFouh4lhM+0fxlxswjgUf1Wk3bByrWysZsonV+HGshv/g1uUmiuOL9k+CDW/eOPCj3G+C4VbEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQiAMScUAiDkjEAYk4IBEHJOKARByQ/gN6WYmVglzaVwAAAABJRU5ErkJggg==">
+<title>Ma semaine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column. Title, the fiche button (shown only once a session is over), a two-week switch, then one row per day: a date block and one card per session. Done = solid card with a check, planned = dashed card. */
+:root {
+  --bg: #F2F5F8;
+  --surface: #FFFFFF;
+  --ink: #0E1C2B;
+  --muted: #5A6B7C;
+  --line: #DCE3EA;
+  --accent: #1F5FD6;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E3ECFC;
+  --rest: #E8EDF2;
+  --hold-bg: #FFF1D6;
+  --hold-ink: #7A4A06;
+  --ok: #1B7A4B;
+  --ok-tick: #FFFFFF;
+  --font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
+  --font-body: 'Figtree', system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1722; --surface: #132231; --ink: #E7EDF3; --muted: #98A9BA; --line: #23384B;
+    --accent: #6BA2FF; --accent-ink: #07203F; --accent-soft: #17335A; --rest: #101E2B;
+    --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1722; --surface: #132231; --ink: #E7EDF3; --muted: #98A9BA; --line: #23384B;
+  --accent: #6BA2FF; --accent-ink: #07203F; --accent-soft: #17335A; --rest: #101E2B;
+  --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; }
+h1 { font-size: 32px; line-height: 1.1; letter-spacing: -0.01em; }
+h2 { font-size: 17px; line-height: 1.2; }
+p { margin: 0; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 52px; padding: 0 18px;
+  background: var(--accent); color: var(--accent-ink);
+  font: 600 17px/1 var(--font-body); text-decoration: none; border-radius: 12px;
+}
+.btn:focus-visible, .seg button:focus-visible, .tag:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.weekhead { display: flex; flex-direction: column; gap: 12px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--rest); border-radius: 12px; }
+.seg button {
+  min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
+  font: 600 15px/1.1 var(--font-body); cursor: pointer; padding: 0 8px;
+}
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.range, .notice { color: var(--muted); font-size: 15px; }
+
+.days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.day { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.date { display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; padding: 8px 0; color: var(--muted); }
+.date .dow { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.date .num { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.day.is-today .date { background: var(--accent); }
+.day.is-today .date .dow, .day.is-today .date .num { color: var(--accent-ink); }
+.slots { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; }
+.card.planned { background: transparent; border: 1.5px dashed var(--muted); padding: 11px 13px; }
+.card.rest { background: var(--rest); border-color: transparent; display: block; color: var(--muted); }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.name { font-weight: 600; }
+.detail { color: var(--muted); font-size: 15px; }
+.ic { display: block; width: 22px; height: 22px; margin-top: 1px; }
+.ic svg { display: block; }
+.i-fill { fill: var(--ok); }
+.i-tick { fill: none; stroke: var(--ok-tick); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.i-dash { fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-dasharray: 3.2 3; }
+
+.tag { font-size: 12px; font-weight: 600; line-height: 1.2; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.tag.f-ok { background: var(--accent-soft); color: var(--accent); }
+.tag.f-todo { background: var(--hold-bg); color: var(--hold-ink); text-decoration: underline; text-underline-offset: 2px; }
+
+.note { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.note.hold { background: var(--hold-bg); color: var(--hold-ink); }
+.foot { font-size: 14px; color: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) { .seg button { transition: background .15s; } }
+</style>
+
+<div class="wrap">
+  <h1>Ma semaine</h1>
+
+  <a class="btn" id="fiche" target="_blank" rel="noopener" hidden>Remplir ma fiche</a>
+
+  <section class="weekhead">
+    <div class="seg" id="seg" role="group" aria-label="Choisir la semaine"></div>
+    <p class="range" id="range"></p>
+    <p class="notice" id="notice" hidden></p>
+    <ol class="days" id="days"></ol>
+  </section>
+
+  <section class="note hold">
+    <h2>On attend</h2>
+    <p>Service, smash et gestes au-dessus de la tête : pas encore. Papa te dit quand ça reprend.</p>
+    <p>Ton épaule décide : tu peux t’arrêter ou sauter une séance, sans te justifier.</p>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+/* Données : on modifie seulement ce bloc quand le planning change.
+   statut : 'done' = fait, 'planned' = prévu.
+   fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance faite à partir de
+   FORM_FROM sans 'ok' affiche « Fiche à remplir ». Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
+const UPDATED = '2026-10-16';
+const FORM_URL = 'https://form.jotform.com/262845609478068';
+const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
+const DONE = 'done', PLAN = 'planned';
+const S = (type, mode, start, end, status, fiche) => ({ type, mode, start, end, status, fiche });
+const P = (type, dur) => ({ type, dur, status: PLAN });
+const WEEKS = [
+  { from: '2026-10-12', label: 'Cette semaine',
+    days: [
+      [S('tennis', 'groupe', '18:00', '19:00', DONE), S('physique', 'groupe', '19:30', '20:30', DONE)],
+      [S('mental', 'groupe', '18:00', '19:00', DONE)],
+      [S('tennis', 'groupe', '18:00', '19:00', DONE), S('physique', 'groupe', '19:30', '20:30', DONE)],
+      [S('tennis', 'groupe', '10:30', '11:30', DONE, 'ok'), S('physique', 'spécifique', '12:30', '13:30', DONE, 'ok')],
+      [S('tennis', 'groupe', '18:00', '19:00', PLAN), S('physique', 'groupe', '19:30', '20:30', PLAN)],
+      [], []
+    ] },
+  { from: '2026-10-19', label: 'Semaine suivante',
+    days: [[P('tennis', '1 h 30')], [P('tennis', '1 h 30')], [P('tennis', '1 h 30')],
+           [P('tennis', '1 h 30')], [P('tennis', '1 h 30')], [], []] }
+];
+
+/* Dates : jour civil local, sans heure. */
+const DOW = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+const DOW_LONG = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return iso(d); };
+const longDate = s => { const d = parse(s); return DOW_LONG[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()]; };
+const rangeLabel = from => {
+  const a = parse(from), b = parse(addDays(from, 6));
+  return a.getMonth() === b.getMonth()
+    ? a.getDate() + ' – ' + b.getDate() + ' ' + MONTHS[b.getMonth()]
+    : a.getDate() + ' ' + MONTHS[a.getMonth()] + ' – ' + b.getDate() + ' ' + MONTHS[b.getMonth()];
+};
+/* Semaine à ouvrir : celle qui contient aujourd'hui, sinon la plus proche. */
+function pickWeek(weeks, today) {
+  for (let i = 0; i < weeks.length; i++) if (today >= weeks[i].from && today <= addDays(weeks[i].from, 6)) return { index: i, where: 'in' };
+  return today < weeks[0].from ? { index: 0, where: 'before' } : { index: weeks.length - 1, where: 'after' };
+}
+function sessionsOn(weeks, day) {
+  for (const w of weeks) for (let i = 0; i < 7; i++) if (addDays(w.from, i) === day) return w.days[i];
+  return [];
+}
+
+/* Séances */
+const TYPES = { tennis: 'Tennis', physique: 'Physique', mental: 'Mental' };
+const MODES = { 'groupe': 'Groupe', 'spécifique': 'Spécifique' };
+const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+const fmtT = t => { const [h, m] = t.split(':').map(Number); return h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : ''); };
+const detail = s => s.start ? [MODES[s.mode], fmtT(s.start) + ' – ' + fmtT(s.end)].filter(Boolean).join(' · ') : s.dur;
+let nowMin = 0, todayIso = '';
+function clock() { const n = new Date(); nowMin = n.getHours() * 60 + n.getMinutes(); todayIso = iso(n); }
+clock();
+/* Terminée : marquée faite, ou heure de fin passée aujourd'hui. Le bouton de la fiche s'ouvre alors. */
+const isOver = (day, s) => s.status === DONE || (day === todayIso && s.end && nowMin > mins(s.end));
+
+const SVG = inner => '<svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">' + inner + '</svg>';
+const ICONS = {
+  done: SVG('<circle cx="11" cy="11" r="10" class="i-fill"/><path d="M6.5 11.5l3 3 6-6.5" class="i-tick"/>'),
+  planned: SVG('<circle cx="11" cy="11" r="9.25" class="i-dash"/>')
+};
+
+/* Affichage */
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
+function ficheTag(day, s) {
+  if (s.fiche === 'ok') return el('span', 'tag f-ok', 'Fiche reçue');
+  if (s.status === DONE && day >= FORM_FROM) {
+    const a = el('a', 'tag f-todo', 'Fiche à remplir'); a.href = FORM_URL; a.target = '_blank'; a.rel = 'noopener'; return a;
+  }
+  return null;
+}
+function sessionCard(day, s) {
+  const card = el('div', 'card ' + (s.status === DONE ? 'done' : 'planned'));
+  const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', s.status === DONE ? 'Fait' : 'Prévu');
+  ic.innerHTML = ICONS[s.status === DONE ? 'done' : 'planned'];
+  const body = el('div');
+  const top = el('div', 'top'); top.appendChild(el('span', 'name', TYPES[s.type]));
+  const tag = ficheTag(day, s); if (tag) top.appendChild(tag);
+  body.append(top, el('p', 'detail', detail(s)));
+  card.append(ic, body);
+  return card;
+}
+
+const start = pickWeek(WEEKS, todayIso);
+let current = start.index;
+
+function renderButton() {
+  $('fiche').hidden = !sessionsOn(WEEKS, todayIso).some(s => isOver(todayIso, s) && s.fiche !== 'ok');
+}
+function renderWeek() {
+  const w = WEEKS[current];
+  const seg = $('seg'); seg.textContent = '';
+  WEEKS.forEach((wk, i) => {
+    const b = el('button', '', wk.label);
+    b.type = 'button'; b.id = 'seg-' + i;
+    b.setAttribute('aria-pressed', String(i === current));
+    b.addEventListener('click', () => { current = i; renderWeek(); });
+    seg.appendChild(b);
+  });
+  $('range').textContent = rangeLabel(w.from);
+  const notice = $('notice');
+  const last = addDays(WEEKS[WEEKS.length - 1].from, 6);
+  notice.hidden = start.where === 'in';
+  if (start.where === 'after') notice.textContent = 'Le planning s’arrête le ' + longDate(last) + '. Papa le met à jour.';
+  if (start.where === 'before') notice.textContent = 'Le planning commence le ' + longDate(WEEKS[0].from) + '.';
+  const list = $('days'); list.textContent = '';
+  w.days.forEach((sessions, i) => {
+    const day = addDays(w.from, i), d = parse(day);
+    const li = el('li', 'day' + (day === todayIso ? ' is-today' : ''));
+    const date = el('div', 'date'); date.append(el('span', 'dow', DOW[d.getDay()]), el('span', 'num', String(d.getDate())));
+    const slots = el('div', 'slots');
+    if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
+    else sessions.forEach(s => slots.appendChild(sessionCard(day, s)));
+    li.append(date, slots); list.appendChild(li);
+  });
+}
+$('fiche').href = FORM_URL;
+$('foot').textContent = 'Mis à jour le ' + longDate(UPDATED) + '.';
+renderButton(); renderWeek();
+/* Une page laissée ouverte suit l'heure : une séance qui se termine ouvre le bouton sans recharger. */
+setInterval(() => { clock(); renderButton(); renderWeek(); }, 60000);
+</script>
+</html>
