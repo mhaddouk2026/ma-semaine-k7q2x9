@@ -131,6 +131,7 @@ p { margin: 0; }
 const UPDATED = '2026-10-16';
 const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
+const NO_FICHE = { mental: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
 const DONE = 'done', PLAN = 'planned';
 const S = (type, mode, start, end, status, fiche) => ({ type, mode, start, end, status, fiche });
 const P = (type, dur) => ({ type, dur, status: PLAN });
@@ -201,8 +202,9 @@ const ICONS = {
 /* Affichage */
 const $ = id => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
-const needsFiche = (day, s) => s.fiche !== 'ok' && day >= FORM_FROM && isOver(day, s);
+const needsFiche = (day, s) => !NO_FICHE[s.type] && s.fiche !== 'ok' && day >= FORM_FROM && isOver(day, s);
 function ficheTag(day, s) {
+  if (NO_FICHE[s.type]) return null;
   if (s.fiche === 'ok') return el('span', 'tag f-ok', 'Fiche reçue');
   return needsFiche(day, s) ? el('span', 'tag f-todo', 'Fiche à remplir') : null;
 }
