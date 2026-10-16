@@ -13,7 +13,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
 <style>
-/* Layout: one narrow column. Title, the fiche button (shown only once a session is over), a two-week switch, then one row per day: a date block and one card per session. Done = solid card with a check, planned = dashed card. */
+/* Layout: one narrow column. Title, a two-week switch, then one row per day: a date block and one card per session. Done = solid card with a check, planned = dashed card. A finished session without a fiche is itself the link to the form, with date, type and rank prefilled. */
 :root {
   --bg: #F2F5F8;
   --surface: #FFFFFF;
@@ -60,13 +60,8 @@ h1 { font-size: 32px; line-height: 1.1; letter-spacing: -0.01em; }
 h2 { font-size: 17px; line-height: 1.2; }
 p { margin: 0; }
 
-.btn {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 52px; padding: 0 18px;
-  background: var(--accent); color: var(--accent-ink);
-  font: 600 17px/1 var(--font-body); text-decoration: none; border-radius: 12px;
-}
-.btn:focus-visible, .seg button:focus-visible, .tag:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.card.link { color: inherit; text-decoration: none; cursor: pointer; }
+.card.link:focus-visible, .seg button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .weekhead { display: flex; flex-direction: column; gap: 12px; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--rest); border-radius: 12px; }
@@ -112,8 +107,6 @@ p { margin: 0; }
 <div class="wrap">
   <h1>Ma semaine</h1>
 
-  <a class="btn" id="fiche" target="_blank" rel="noopener" hidden>Remplir ma fiche</a>
-
   <section class="weekhead">
     <div class="seg" id="seg" role="group" aria-label="Choisir la semaine"></div>
     <p class="range" id="range"></p>
@@ -133,8 +126,8 @@ p { margin: 0; }
 <script>
 /* Données : on modifie seulement ce bloc quand le planning change.
    statut : 'done' = fait, 'planned' = prévu.
-   fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance faite à partir de
-   FORM_FROM sans 'ok' affiche « Fiche à remplir ». Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
+   fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
+   FORM_FROM sans 'ok' affiche « Fiche à remplir » : toucher la carte ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
 const UPDATED = '2026-10-16';
 const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
@@ -175,21 +168,28 @@ function pickWeek(weeks, today) {
   for (let i = 0; i < weeks.length; i++) if (today >= weeks[i].from && today <= addDays(weeks[i].from, 6)) return { index: i, where: 'in' };
   return today < weeks[0].from ? { index: 0, where: 'before' } : { index: weeks.length - 1, where: 'after' };
 }
-function sessionsOn(weeks, day) {
-  for (const w of weeks) for (let i = 0; i < 7; i++) if (addDays(w.from, i) === day) return w.days[i];
-  return [];
-}
 
 /* Séances */
 const TYPES = { tennis: 'Tennis', physique: 'Physique', mental: 'Mental' };
 const MODES = { 'groupe': 'Groupe', 'spécifique': 'Spécifique' };
+/* Formulaire : noms uniques des champs et textes exacts des options (lus sur le formulaire en ligne le 2026-10-16).
+   Un type absent d'ici (mental) n'est pas prérempli ; au-delà de deux séances le même jour, le rang non plus. */
+const FORM_TYPE = { tennis: 'Tennis (entraînement)', physique: 'Physique' };
+const FORM_RANK = { 1: ["La seule aujourd'hui"], 2: ["La 1ère séance aujourd'hui", "La 2ème séance aujourd'hui"] };
+function ficheUrl(day, s, k, n) {
+  const d = parse(day);
+  const q = ['q3_datetime1[day]=' + d.getDate(), 'q3_datetime1[month]=' + (d.getMonth() + 1), 'q3_datetime1[year]=' + d.getFullYear()];
+  if (FORM_TYPE[s.type]) q.push('q4_radio2=' + encodeURIComponent(FORM_TYPE[s.type]));
+  if (FORM_RANK[n]) q.push('q6_radio4=' + encodeURIComponent(FORM_RANK[n][k]));
+  return FORM_URL + '?' + q.join('&');
+}
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fmtT = t => { const [h, m] = t.split(':').map(Number); return h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : ''); };
 const detail = s => s.start ? [MODES[s.mode], fmtT(s.start) + ' – ' + fmtT(s.end)].filter(Boolean).join(' · ') : s.dur;
 let nowMin = 0, todayIso = '';
 function clock() { const n = new Date(); nowMin = n.getHours() * 60 + n.getMinutes(); todayIso = iso(n); }
 clock();
-/* Terminée : marquée faite, ou heure de fin passée aujourd'hui. Le bouton de la fiche s'ouvre alors. */
+/* Terminée : marquée faite, ou heure de fin passée aujourd'hui. La carte ouvre alors la fiche. */
 const isOver = (day, s) => s.status === DONE || (day === todayIso && s.end && nowMin > mins(s.end));
 
 const SVG = inner => '<svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">' + inner + '</svg>';
@@ -201,15 +201,16 @@ const ICONS = {
 /* Affichage */
 const $ = id => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
+const needsFiche = (day, s) => s.fiche !== 'ok' && day >= FORM_FROM && isOver(day, s);
 function ficheTag(day, s) {
   if (s.fiche === 'ok') return el('span', 'tag f-ok', 'Fiche reçue');
-  if (s.status === DONE && day >= FORM_FROM) {
-    const a = el('a', 'tag f-todo', 'Fiche à remplir'); a.href = FORM_URL; a.target = '_blank'; a.rel = 'noopener'; return a;
-  }
-  return null;
+  return needsFiche(day, s) ? el('span', 'tag f-todo', 'Fiche à remplir') : null;
 }
-function sessionCard(day, s) {
-  const card = el('div', 'card ' + (s.status === DONE ? 'done' : 'planned'));
+/* k = rang de la séance dans la journée (0, 1…), n = nombre de séances ce jour-là. */
+function sessionCard(day, s, k, n) {
+  const link = needsFiche(day, s);
+  const card = el(link ? 'a' : 'div', 'card ' + (s.status === DONE ? 'done' : 'planned') + (link ? ' link' : ''));
+  if (link) { card.href = ficheUrl(day, s, k, n); card.target = '_blank'; card.rel = 'noopener'; }
   const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', s.status === DONE ? 'Fait' : 'Prévu');
   ic.innerHTML = ICONS[s.status === DONE ? 'done' : 'planned'];
   const body = el('div');
@@ -223,9 +224,6 @@ function sessionCard(day, s) {
 const start = pickWeek(WEEKS, todayIso);
 let current = start.index;
 
-function renderButton() {
-  $('fiche').hidden = !sessionsOn(WEEKS, todayIso).some(s => isOver(todayIso, s) && s.fiche !== 'ok');
-}
 function renderWeek() {
   const w = WEEKS[current];
   const seg = $('seg'); seg.textContent = '';
@@ -249,14 +247,13 @@ function renderWeek() {
     const date = el('div', 'date'); date.append(el('span', 'dow', DOW[d.getDay()]), el('span', 'num', String(d.getDate())));
     const slots = el('div', 'slots');
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
-    else sessions.forEach(s => slots.appendChild(sessionCard(day, s)));
+    else sessions.forEach((s, k) => slots.appendChild(sessionCard(day, s, k, sessions.length)));
     li.append(date, slots); list.appendChild(li);
   });
 }
-$('fiche').href = FORM_URL;
 $('foot').textContent = 'Mis à jour le ' + longDate(UPDATED) + '.';
-renderButton(); renderWeek();
-/* Une page laissée ouverte suit l'heure : une séance qui se termine ouvre le bouton sans recharger. */
-setInterval(() => { clock(); renderButton(); renderWeek(); }, 60000);
+renderWeek();
+/* Une page laissée ouverte suit l'heure : une séance qui se termine ouvre sa fiche sans recharger. */
+setInterval(() => { clock(); renderWeek(); }, 60000);
 </script>
 </html>
