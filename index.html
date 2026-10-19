@@ -13,7 +13,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&display=swap">
 <style>
-/* Layout: one narrow column. Title, a two-week switch, then one tinted panel per day (date block on the left, one card per session inside), so a session never reads as belonging to the next day. Done = solid card with a check, planned = dashed card. A finished session without a fiche is itself the link to the form, with date, type and rank prefilled. */
+/* Layout: one narrow column. Title, a two-week switch, then one tinted panel per day (date block on the left, one card per session inside), so a session never reads as belonging to the next day. Done = solid card with a check, planned = dashed card, to confirm = amber card with a question mark (end time passed, nobody has confirmed), not done = muted card with a cross. A finished session without a fiche is itself the link to the form, with date, type and rank prefilled. */
 :root {
   --bg: #F2F5F8;
   --surface: #FFFFFF;
@@ -84,6 +84,9 @@ p { margin: 0; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; }
 .card.planned { background: transparent; border: 1.5px dashed var(--muted); padding: 11px 13px; }
+.card.confirm { border: 1.5px solid var(--hold-ink); padding: 11px 13px; }
+.card.skipped { background: transparent; border-color: var(--muted); }
+.card.skipped .name { text-decoration: line-through; color: var(--muted); }
 .card.rest { background: var(--rest); border-color: transparent; display: block; color: var(--muted); }
 .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .name { font-weight: 600; }
@@ -93,10 +96,17 @@ p { margin: 0; }
 .i-fill { fill: var(--ok); }
 .i-tick { fill: none; stroke: var(--ok-tick); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .i-dash { fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-dasharray: 3.2 3; }
+.i-ask { fill: var(--hold-bg); stroke: var(--hold-ink); stroke-width: 1.8; }
+.i-q { fill: none; stroke: var(--hold-ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.i-qdot { fill: var(--hold-ink); }
+.i-skip { fill: none; stroke: var(--muted); stroke-width: 1.8; }
+.i-x { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
 
 .tag { font-size: 12px; font-weight: 600; line-height: 1.2; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
 .tag.f-ok { background: var(--accent-soft); color: var(--accent); }
 .tag.f-todo { background: var(--hold-bg); color: var(--hold-ink); text-decoration: underline; text-underline-offset: 2px; }
+.tag.f-confirm { background: var(--hold-bg); color: var(--hold-ink); }
+.tag.f-skip { background: var(--rest); color: var(--muted); }
 
 .note { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .note.hold { background: var(--hold-bg); color: var(--hold-ink); }
@@ -126,15 +136,16 @@ p { margin: 0; }
 
 <script>
 /* Données : on modifie seulement ce bloc quand le planning change.
-   statut : 'done' = fait, 'planned' = prévu.
+   statut : 'done' = fait, 'planned' = prévu, 'skipped' = pas faite (motif en 7ᵉ argument de S, texte libre pour l’instant).
+   Une séance 'planned' dont l’heure de fin est passée s’affiche « à confirmer » toute seule : jamais « faite » par défaut (decisions.md 2026-10-18 (deuxième)).
    fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
    FORM_FROM sans 'ok' affiche « Fiche à remplir » : toucher la carte ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
 const UPDATED = '2026-10-19';
 const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
 const NO_FICHE = { mental: true, kine: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
-const DONE = 'done', PLAN = 'planned';
-const S = (type, mode, start, end, status, fiche) => ({ type, mode, start, end, status, fiche });
+const DONE = 'done', PLAN = 'planned', SKIP = 'skipped';
+const S = (type, mode, start, end, status, fiche, motif) => ({ type, mode, start, end, status, fiche, motif });
 const P = (type, dur) => ({ type, dur, status: PLAN });
 const WEEKS = [
   { from: '2026-10-12', label: 'Semaine dernière',
@@ -196,35 +207,45 @@ const detail = s => s.start ? [MODES[s.mode], fmtT(s.start) + ' – ' + fmtT(s.e
 let nowMin = 0, todayIso = '';
 function clock() { const n = new Date(); nowMin = n.getHours() * 60 + n.getMinutes(); todayIso = iso(n); }
 clock();
-/* Terminée : marquée faite, ou heure de fin passée aujourd'hui. La carte ouvre alors la fiche. */
-const isOver = (day, s) => s.status === DONE || (day === todayIso && s.end && nowMin > mins(s.end));
+/* Heure de fin passée : jour antérieur, ou aujourd'hui après l'heure de fin (sans heure de fin, le jour doit être fini). */
+const pastEnd = (day, s) => day < todayIso || (day === todayIso && !!s.end && nowMin > mins(s.end));
+/* Terminée : marquée faite, ou heure de fin passée sans « pas faite ». La carte ouvre alors la fiche. */
+const isOver = (day, s) => s.status !== SKIP && (s.status === DONE || pastEnd(day, s));
+/* Quatre états : fait · pas faite · à confirmer (passée, non confirmée) · prévu. */
+const stateOf = (day, s) => s.status === DONE ? 'done' : s.status === SKIP ? 'skipped' : pastEnd(day, s) ? 'confirm' : 'planned';
 
 const SVG = inner => '<svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">' + inner + '</svg>';
 const ICONS = {
   done: SVG('<circle cx="11" cy="11" r="10" class="i-fill"/><path d="M6.5 11.5l3 3 6-6.5" class="i-tick"/>'),
-  planned: SVG('<circle cx="11" cy="11" r="9.25" class="i-dash"/>')
+  planned: SVG('<circle cx="11" cy="11" r="9.25" class="i-dash"/>'),
+  confirm: SVG('<circle cx="11" cy="11" r="9.6" class="i-ask"/><path d="M8.6 8.9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.2.8-1.2 1.7" class="i-q"/><circle cx="11" cy="15.6" r="1.1" class="i-qdot"/>'),
+  skipped: SVG('<circle cx="11" cy="11" r="9.6" class="i-skip"/><path d="M7.5 7.5l7 7M14.5 7.5l-7 7" class="i-x"/>')
 };
+const LABELS = { done: 'Fait', planned: 'Prévu', confirm: 'À confirmer', skipped: 'Pas faite' };
 
 /* Affichage */
 const $ = id => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
 const needsFiche = (day, s) => !NO_FICHE[s.type] && s.fiche !== 'ok' && day >= FORM_FROM && isOver(day, s);
-function ficheTag(day, s) {
-  if (NO_FICHE[s.type]) return null;
-  if (s.fiche === 'ok') return el('span', 'tag f-ok', 'Fiche reçue');
-  return needsFiche(day, s) ? el('span', 'tag f-todo', 'Fiche à remplir') : null;
+function ficheTag(day, s, state) {
+  if (state === 'skipped') return el('span', 'tag f-skip', 'Pas faite');
+  if (!NO_FICHE[s.type]) {
+    if (s.fiche === 'ok') return el('span', 'tag f-ok', 'Fiche reçue');
+    if (needsFiche(day, s)) return el('span', 'tag f-todo', 'Fiche à remplir');
+  }
+  return state === 'confirm' ? el('span', 'tag f-confirm', 'À confirmer') : null;
 }
 /* k = rang de la séance dans la journée (0, 1…), n = nombre de séances ce jour-là. */
 function sessionCard(day, s, k, n) {
-  const link = needsFiche(day, s);
-  const card = el(link ? 'a' : 'div', 'card ' + (s.status === DONE ? 'done' : 'planned') + (link ? ' link' : ''));
+  const state = stateOf(day, s), link = needsFiche(day, s);
+  const card = el(link ? 'a' : 'div', 'card ' + state + (link ? ' link' : ''));
   if (link) { card.href = ficheUrl(day, s, k, n); card.target = '_blank'; card.rel = 'noopener'; }
-  const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', s.status === DONE ? 'Fait' : 'Prévu');
-  ic.innerHTML = ICONS[s.status === DONE ? 'done' : 'planned'];
+  const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', LABELS[state]);
+  ic.innerHTML = ICONS[state];
   const body = el('div');
   const top = el('div', 'top'); top.appendChild(el('span', 'name', TYPES[s.type]));
-  const tag = ficheTag(day, s); if (tag) top.appendChild(tag);
-  body.append(top, el('p', 'detail', detail(s)));
+  const tag = ficheTag(day, s, state); if (tag) top.appendChild(tag);
+  body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
   card.append(ic, body);
   return card;
 }
@@ -261,7 +282,7 @@ function renderWeek() {
 }
 $('foot').textContent = 'Mis à jour le ' + longDate(UPDATED) + '.';
 renderWeek();
-/* Une page laissée ouverte suit l'heure : une séance qui se termine ouvre sa fiche sans recharger. */
+/* Une page laissée ouverte suit l'heure : une séance qui se termine passe « à confirmer » et ouvre sa fiche sans recharger. */
 setInterval(() => { clock(); renderWeek(); }, 60000);
 </script>
 </html>
