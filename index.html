@@ -140,7 +140,7 @@ p { margin: 0; }
    Une séance 'planned' dont l’heure de fin est passée s’affiche « à confirmer » toute seule : jamais « faite » par défaut (decisions.md 2026-10-18 (deuxième)).
    fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
    FORM_FROM sans 'ok' affiche « Fiche à remplir » : toucher la carte ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
-const UPDATED = '2026-10-19';
+const UPDATED = '2026-10-20';
 const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
 const NO_FICHE = { mental: true, kine: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
@@ -160,7 +160,7 @@ const WEEKS = [
   { from: '2026-10-19', label: 'Cette semaine',
     days: [
       [S('physique', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
-      [S('mental', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
+      [S('physique', null, '15:30', '16:30', DONE), S('mental', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
       [S('physique', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
       [S('tennis', null, '19:30', '21:00', PLAN)],
       [S('physique', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)], [], []
