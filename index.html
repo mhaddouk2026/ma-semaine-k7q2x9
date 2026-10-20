@@ -367,7 +367,7 @@ function actions(day, s, st, k, n) {
   }
   if (failed === key) box.appendChild(el('p', 'err', 'Envoi impossible. Réessaie, ou préviens Mourad.'));
   if (st === 'skipped') {
-    if (confirmKey) box.appendChild(ibtn('', 'Rétablir la séance', ICON.restore, () => run(key, { action: 'retablir', ...ident(day, s) }, () => { s.status = PLAN; delete s.motif; }, 'Séance rétablie.')));
+    if (confirmKey && (day > todayIso || (day === todayIso && nowMin < EDIT_UNTIL))) box.appendChild(ibtn('', 'Rétablir la séance', ICON.restore, () => run(key, { action: 'retablir', ...ident(day, s) }, () => { s.status = PLAN; delete s.motif; }, 'Séance rétablie.')));
   } else {
     if (NO_FICHE[s.type] && st === 'confirm' && confirmKey) box.appendChild(ibtn('ok', 'Marquer faite', ICON.check, () => run(key, { action: 'faite', ...ident(day, s) }, () => { s.status = DONE; }, 'Marquée faite.')));
     if (needsFiche(day, s, st)) box.appendChild(link('btn fill', 'Remplir la fiche', ficheUrl(day, s, k, n)));
