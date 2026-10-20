@@ -108,6 +108,18 @@ p { margin: 0; }
 .tag.f-confirm { background: var(--hold-bg); color: var(--hold-ink); }
 .tag.f-skip { background: var(--rest); color: var(--muted); }
 
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.acts button { min-height: 44px; border-radius: 10px; font: 600 15px/1.1 var(--font-body); cursor: pointer; padding: 0 16px; border: 1.5px solid var(--accent); }
+.acts .yes { background: var(--accent); color: var(--accent-ink); }
+.acts .no { background: transparent; color: var(--accent); }
+.acts .go { background: var(--accent); color: var(--accent-ink); }
+.acts button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.acts button:disabled { opacity: .6; cursor: default; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.chips button { min-height: 36px; font-size: 14px; padding: 0 12px; border-radius: 999px; background: var(--rest); color: var(--ink); border: 1px solid var(--line); }
+.chips button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.acts .err { width: 100%; color: var(--hold-ink); font-size: 14px; margin: 0; }
+
 .note { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .note.hold { background: var(--hold-bg); color: var(--hold-ink); }
 .foot { font-size: 14px; color: var(--muted); }
@@ -160,7 +172,7 @@ const WEEKS = [
   { from: '2026-10-19', label: 'Cette semaine',
     days: [
       [S('physique', null, '18:30', '19:30', DONE, 'ok'), S('tennis', null, '19:30', '21:00', DONE, 'ok')],
-      [S('physique', null, '15:30', '16:30', DONE), S('mental', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
+      [S('physique', null, '15:30', '16:30', DONE, 'ok'), S('mental', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
       [S('physique', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)],
       [S('tennis', null, '19:30', '21:00', PLAN)],
       [S('physique', null, '18:30', '19:30', PLAN), S('tennis', null, '19:30', '21:00', PLAN)], [], []
@@ -246,8 +258,54 @@ function sessionCard(day, s, k, n) {
   const top = el('div', 'top'); top.appendChild(el('span', 'name', TYPES[s.type]));
   const tag = ficheTag(day, s, state); if (tag) top.appendChild(tag);
   body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
+  if (NO_FICHE[s.type] && state === 'confirm' && confirmKey) body.appendChild(actions(day, s));
   card.append(ic, body);
   return card;
+}
+
+/* Confirmation depuis la page (kiné, mental : pas de fiche). Les boutons n'existent que si la clé est dans le navigateur :
+   on l'y met une fois en ouvrant le lien « …/#k=<clé> » (decisions.md 2026-10-20 (cinquième) à (huitième)).
+   La clé n'est jamais écrite dans ce fichier ni dans la copie publique. L'envoi part vers le relais, qui lance la règle
+   « Séance confirmée » : la page enregistrée se met à jour quelques instants après. */
+const CONFIRM_URL = 'https://relais-jotform.mhaddouk.workers.dev/confirmer';
+const MOTIFS = ['Annulée par le club', 'Douleur', 'Autre'];
+let confirmKey = '';
+try {
+  const m = /[#&]k=([^&]+)/.exec(location.hash);
+  if (m) { localStorage.setItem('cle-confirmer', decodeURIComponent(m[1])); history.replaceState(null, '', location.pathname + location.search); }
+  confirmKey = localStorage.getItem('cle-confirmer') || '';
+} catch (e) { confirmKey = ''; }
+let asking = null, motifDraft = '', sending = null, failed = null;
+const keyOf = (day, s) => day + s.type;
+async function send(day, s, status, motif) {
+  const k = keyOf(day, s);
+  sending = k; asking = null; failed = null; renderWeek();
+  try {
+    const res = await fetch(CONFIRM_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-cle': confirmKey },
+      body: JSON.stringify({ date: day, type: s.type, statut: status === DONE ? 'faite' : 'pas faite', motif })
+    });
+    if (!res.ok) throw new Error(String(res.status));
+    s.status = status; if (motif) s.motif = motif;
+  } catch (e) { failed = k; }
+  sending = null; motifDraft = ''; renderWeek();
+}
+function actions(day, s) {
+  const k = keyOf(day, s), box = el('div', 'acts');
+  if (sending === k) { box.appendChild(el('p', 'detail', 'Envoi…')); return box; }
+  if (asking === k) {
+    const chips = el('div', 'chips');
+    MOTIFS.forEach(m => { const b = el('button', '', m); b.type = 'button'; b.setAttribute('aria-pressed', String(motifDraft === m)); b.addEventListener('click', () => { motifDraft = m; renderWeek(); }); chips.appendChild(b); });
+    const go = el('button', 'go', 'Envoyer'); go.type = 'button'; go.disabled = !motifDraft;
+    go.addEventListener('click', () => send(day, s, SKIP, motifDraft));
+    const back = el('button', 'no', 'Annuler'); back.type = 'button'; back.addEventListener('click', () => { asking = null; motifDraft = ''; renderWeek(); });
+    box.append(chips, go, back); return box;
+  }
+  if (failed === k) box.appendChild(el('p', 'err', 'Envoi impossible. Réessaie, ou préviens Mourad.'));
+  const yes = el('button', 'yes', 'Faite'); yes.type = 'button'; yes.addEventListener('click', () => send(day, s, DONE));
+  const no = el('button', 'no', 'Pas faite'); no.type = 'button'; no.addEventListener('click', () => { asking = k; motifDraft = ''; failed = null; renderWeek(); });
+  box.append(yes, no); return box;
 }
 
 const start = pickWeek(WEEKS, todayIso);
