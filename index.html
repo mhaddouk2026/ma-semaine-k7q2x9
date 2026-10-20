@@ -280,7 +280,7 @@ try {
   confirmKey = localStorage.getItem('cle-confirmer') || '';
 } catch (e) { confirmKey = ''; }
 const ui = { open: null, origin: '', motif: '', add: null, addType: 'tennis', addMode: 'groupe', start: '19:30', end: '21:00', err: '' };
-let sending = null, failed = null, toastTimer;
+let failed = null, toastTimer;
 const keyOf = (day, s) => day + s.type + s.start;
 const hoursOf = s => (mins(s.end) - mins(s.start)) / 60;
 const weekHours = w => w.days.flat().filter(s => s.start && !NO_FICHE[s.type] && s.status !== SKIP).reduce((a, s) => a + hoursOf(s), 0);
@@ -290,13 +290,29 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
 }
-function run(key, payload, apply, message) {
-  sending = key; failed = null; ui.open = null; ui.err = ''; renderWeek();
-  fetch(CONFIRM_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-cle': confirmKey }, body: JSON.stringify(payload) })
-    .then(res => { if (!res.ok) throw new Error(String(res.status)); apply(); if (message) toast(message); })
-    .catch(() => { failed = key; })
-    .finally(() => { sending = null; renderWeek(); });
+/* Les changements partent un par un, GAP_MS d'écart : la règle GitHub ne garde qu'une exécution en attente derrière celle qui tourne, une rafale de clics en perdrait. */
+const GAP_MS = 15000, queue = [];
+let busy = false, lastSent = 0;
+const queued = key => queue.some(j => j.key === key);
+const state = key => { const j = queue.find(x => x.key === key); return j ? (j.started ? 'Envoi…' : 'En attente…') : null; };
+function pump() {
+  if (busy || !queue.length) return;
+  busy = true;
+  const j = queue[0];
+  setTimeout(() => {
+    j.started = true; renderWeek();
+    fetch(CONFIRM_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-cle': confirmKey }, body: JSON.stringify(j.payload) })
+      .then(res => { if (!res.ok) throw new Error(String(res.status)); j.apply(); if (j.message) toast(j.message); })
+      .catch(() => { failed = j.key; })
+      .finally(() => { queue.shift(); lastSent = Date.now(); busy = false; renderWeek(); pump(); });
+  }, Math.max(0, lastSent + GAP_MS - Date.now()));
 }
+function run(key, payload, apply, message) {
+  failed = null; ui.open = null; ui.err = '';
+  queue.push({ key, payload, apply, message, started: false });
+  renderWeek(); pump();
+}
+window.addEventListener('beforeunload', e => { if (queue.length) { e.preventDefault(); e.returnValue = ''; } });
 const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); return b; };
 const link = (cls, text, href) => { const a = el('a', cls, text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
 const ident = (day, s) => ({ date: day, type: s.type, start: s.start });
@@ -304,7 +320,7 @@ const ident = (day, s) => ({ date: day, type: s.type, start: s.start });
 function actions(day, s, st, k, n) {
   if (!s.start) return null;
   const key = keyOf(day, s), box = el('div', 'acts');
-  if (sending === key) { box.appendChild(el('p', 'detail', 'Envoi…')); return box; }
+  if (queued(key)) { box.appendChild(el('p', 'detail', state(key))); return box; }
   const open = ui.open && ui.open.key === key ? ui.open.kind : null;
   if (open === 'cancel' && confirmKey) {
     const p = el('div', 'panel');
@@ -379,7 +395,7 @@ function sessionCard(day, s, k, n) {
 function addBox(day, di) {
   const key = 'add' + day;
   const box = el('div', 'addbox'), p = el('div', 'panel'); p.style.marginTop = '0';
-  if (sending === key) { p.appendChild(el('p', 'detail', 'Envoi…')); box.appendChild(p); return box; }
+  if (queued(key)) { p.appendChild(el('p', 'detail', state(key))); box.appendChild(p); return box; }
   p.appendChild(el('span', 'lab', 'Type'));
   const t = el('div', 'chips');
   Object.keys(TYPES).forEach(x => { const b = btn('', TYPES[x], () => { ui.addType = x; ui.err = ''; renderWeek(); }); b.setAttribute('aria-pressed', String(ui.addType === x)); t.appendChild(b); });
@@ -459,6 +475,6 @@ $('foot').textContent = 'Mis à jour le ' + longDate(UPDATED) + '.';
 renderWeek();
 /* Une page laissée ouverte suit l'heure : une séance qui se termine passe « à confirmer » et ouvre sa fiche sans recharger.
    On ne redessine pas pendant qu'un panneau est ouvert, pour ne pas faire perdre le texte en cours de saisie. */
-setInterval(() => { clock(); if (!ui.open && ui.add === null && !sending) renderWeek(); }, 60000);
+setInterval(() => { clock(); if (!ui.open && ui.add === null && !queue.length) renderWeek(); }, 60000);
 </script>
 </html>
