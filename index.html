@@ -28,6 +28,7 @@
   --hold-ink: #7A4A06;
   --ok: #1B7A4B;
   --ok-tick: #FFFFFF;
+  --danger: #B3261E;
   --font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
   --font-body: 'Figtree', system-ui, -apple-system, sans-serif;
 }
@@ -35,13 +36,13 @@
   :root:not([data-theme="light"]) {
     --bg: #0C1722; --surface: #132231; --ink: #E7EDF3; --muted: #98A9BA; --line: #23384B;
     --accent: #6BA2FF; --accent-ink: #07203F; --accent-soft: #17335A; --rest: #101E2B;
-    --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; color-scheme: dark;
+    --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; --danger: #FF9C94; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0C1722; --surface: #132231; --ink: #E7EDF3; --muted: #98A9BA; --line: #23384B;
   --accent: #6BA2FF; --accent-ink: #07203F; --accent-soft: #17335A; --rest: #101E2B;
-  --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; color-scheme: dark;
+  --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; --danger: #FF9C94; color-scheme: dark;
 }
 
 body {
@@ -60,8 +61,7 @@ h1 { font-size: 32px; line-height: 1.1; letter-spacing: -0.01em; }
 h2 { font-size: 17px; line-height: 1.2; }
 p { margin: 0; }
 
-.card.link { color: inherit; text-decoration: none; cursor: pointer; }
-.card.link:focus-visible, .seg button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.seg button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .weekhead { display: flex; flex-direction: column; gap: 12px; }
 .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--rest); border-radius: 12px; }
@@ -104,21 +104,40 @@ p { margin: 0; }
 
 .tag { font-size: 12px; font-weight: 600; line-height: 1.2; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
 .tag.f-ok { background: var(--accent-soft); color: var(--accent); }
-.tag.f-todo { background: var(--hold-bg); color: var(--hold-ink); text-decoration: underline; text-underline-offset: 2px; }
-.tag.f-confirm { background: var(--hold-bg); color: var(--hold-ink); }
 .tag.f-skip { background: var(--rest); color: var(--muted); }
 
-.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.acts button { min-height: 44px; border-radius: 10px; font: 600 15px/1.1 var(--font-body); cursor: pointer; padding: 0 16px; border: 1.5px solid var(--accent); }
-.acts .yes { background: var(--accent); color: var(--accent-ink); }
-.acts .no { background: transparent; color: var(--accent); }
-.acts .go { background: var(--accent); color: var(--accent-ink); }
-.acts button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.acts button:disabled { opacity: .6; cursor: default; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
-.chips button { min-height: 36px; font-size: 14px; padding: 0 12px; border-radius: 999px; background: var(--rest); color: var(--ink); border: 1px solid var(--line); }
-.chips button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-.acts .err { width: 100%; color: var(--hold-ink); font-size: 14px; margin: 0; }
+.acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.acts.one { flex-wrap: nowrap; }
+.who { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
+.mode { font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 7px; line-height: 1.2; }
+.mode.g { background: var(--rest); color: var(--muted); border: 1px solid var(--line); }
+.mode.s { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent); }
+.btn { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 44px; border-radius: 10px; font: 600 14px/1.1 var(--font-body); cursor: pointer; padding: 0 12px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.btn.fill { background: var(--accent); color: var(--accent-ink); }
+.btn.warn { border-color: var(--danger); color: var(--danger); }
+.btn.warn.fill { background: var(--danger); color: var(--surface); }
+.btn:disabled { opacity: .5; cursor: default; }
+.quiet { min-height: 44px; border: 0; background: transparent; color: var(--muted); font: 500 14px var(--font-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 0 6px; }
+.quiet.del { color: var(--danger); }
+.add .quiet { color: var(--accent); text-decoration: none; font-weight: 600; }
+.btn:focus-visible, .quiet:focus-visible, .chips button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.panel label, .panel .lab { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { min-height: 40px; font: 500 14px var(--font-body); padding: 0 14px; border-radius: 999px; background: var(--rest); color: var(--ink); border: 1px solid var(--line); cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.pick { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pick .chips button { min-height: 36px; }
+textarea, input[type="time"] { width: 100%; box-sizing: border-box; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: 16px var(--font-body); }
+textarea { resize: vertical; min-height: 64px; }
+.times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.times > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.err { width: 100%; color: var(--danger); font-size: 14px; }
+.ask { font-size: 15px; }
+.addbox { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.total { font-size: 14px; color: var(--muted); }
+.total.over { color: var(--danger); font-weight: 600; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(440px, calc(100vw - 32px)); background: var(--ink); color: var(--bg); border-radius: 10px; padding: 10px 14px; font-size: 14px; z-index: 5; }
 
 .note { border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .note.hold { background: var(--hold-bg); color: var(--hold-ink); }
@@ -133,6 +152,7 @@ p { margin: 0; }
   <section class="weekhead">
     <div class="seg" id="seg" role="group" aria-label="Choisir la semaine"></div>
     <p class="range" id="range"></p>
+    <p class="total" id="total"></p>
     <p class="notice" id="notice" hidden></p>
     <ol class="days" id="days"></ol>
   </section>
@@ -145,19 +165,21 @@ p { margin: 0; }
 
   <p class="foot" id="foot"></p>
 </div>
+<div class="toast" id="toast" hidden role="status"></div>
 
 <script>
 /* Données : on modifie seulement ce bloc quand le planning change.
-   statut : 'done' = fait, 'planned' = prévu, 'skipped' = pas faite (motif en 7ᵉ argument de S, texte libre pour l’instant).
+   statut : 'done' = fait, 'planned' = prévu, 'skipped' = annulée (motif en 7ᵉ argument de S : « origine · texte libre », ex. « Le coach · pluie »).
+   Arguments de S : type, mode ('groupe' | 'spécifique' | null), début, fin, statut, fiche, motif, sid (identifiant de la soumission Jotform, pour « Modifier la fiche »).
    Une séance 'planned' dont l’heure de fin est passée s’affiche « à confirmer » toute seule : jamais « faite » par défaut (decisions.md 2026-10-18 (deuxième)).
    fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
-   FORM_FROM sans 'ok' affiche « Fiche à remplir » : toucher la carte ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
+   FORM_FROM sans 'ok' affiche le bouton « Remplir la fiche », qui ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
 const UPDATED = '2026-10-20';
 const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
 const NO_FICHE = { mental: true, kine: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
 const DONE = 'done', PLAN = 'planned', SKIP = 'skipped';
-const S = (type, mode, start, end, status, fiche, motif) => ({ type, mode, start, end, status, fiche, motif });
+const S = (type, mode, start, end, status, fiche, motif, sid) => ({ type, mode, start, end, status, fiche, motif, sid });
 const P = (type, dur) => ({ type, dur, status: PLAN });
 const WEEKS = [
   { from: '2026-10-12', label: 'Semaine dernière',
@@ -215,15 +237,13 @@ function ficheUrl(day, s, k, n) {
 }
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fmtT = t => { const [h, m] = t.split(':').map(Number); return h + ' h' + (m ? ' ' + String(m).padStart(2, '0') : ''); };
-const detail = s => s.start ? [MODES[s.mode], fmtT(s.start) + ' – ' + fmtT(s.end)].filter(Boolean).join(' · ') : s.dur;
+const detail = s => s.start ? fmtT(s.start) + ' – ' + fmtT(s.end) : s.dur;
 let nowMin = 0, todayIso = '';
 function clock() { const n = new Date(); nowMin = n.getHours() * 60 + n.getMinutes(); todayIso = iso(n); }
 clock();
 /* Heure de fin passée : jour antérieur, ou aujourd'hui après l'heure de fin (sans heure de fin, le jour doit être fini). */
 const pastEnd = (day, s) => day < todayIso || (day === todayIso && !!s.end && nowMin > mins(s.end));
-/* Terminée : marquée faite, ou heure de fin passée sans « pas faite ». La carte ouvre alors la fiche. */
-const isOver = (day, s) => s.status !== SKIP && (s.status === DONE || pastEnd(day, s));
-/* Quatre états : fait · pas faite · à confirmer (passée, non confirmée) · prévu. */
+/* Quatre états : fait · annulée · à confirmer (passée, non confirmée) · prévu. */
 const stateOf = (day, s) => s.status === DONE ? 'done' : s.status === SKIP ? 'skipped' : pastEnd(day, s) ? 'confirm' : 'planned';
 
 const SVG = inner => '<svg viewBox="0 0 22 22" width="22" height="22" aria-hidden="true">' + inner + '</svg>';
@@ -233,79 +253,165 @@ const ICONS = {
   confirm: SVG('<circle cx="11" cy="11" r="9.6" class="i-ask"/><path d="M8.6 8.9a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.2.8-1.2 1.7" class="i-q"/><circle cx="11" cy="15.6" r="1.1" class="i-qdot"/>'),
   skipped: SVG('<circle cx="11" cy="11" r="9.6" class="i-skip"/><path d="M7.5 7.5l7 7M14.5 7.5l-7 7" class="i-x"/>')
 };
-const LABELS = { done: 'Fait', planned: 'Prévu', confirm: 'À confirmer', skipped: 'Pas faite' };
+const LABELS = { done: 'Fait', planned: 'Prévu', confirm: 'À confirmer', skipped: 'Annulée' };
 
 /* Affichage */
 const $ = id => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; };
-const needsFiche = (day, s) => !NO_FICHE[s.type] && s.fiche !== 'ok' && day >= FORM_FROM && isOver(day, s);
-function ficheTag(day, s, state) {
-  if (state === 'skipped') return el('span', 'tag f-skip', 'Pas faite');
-  if (!NO_FICHE[s.type]) {
-    if (s.fiche === 'ok') return el('span', 'tag f-ok', 'Fiche reçue');
-    if (needsFiche(day, s)) return el('span', 'tag f-todo', 'Fiche à remplir');
-  }
-  return state === 'confirm' ? el('span', 'tag f-confirm', 'À confirmer') : null;
-}
-/* k = rang de la séance dans la journée (0, 1…), n = nombre de séances ce jour-là. */
-function sessionCard(day, s, k, n) {
-  const state = stateOf(day, s), link = needsFiche(day, s);
-  const card = el(link ? 'a' : 'div', 'card ' + state + (link ? ' link' : ''));
-  if (link) { card.href = ficheUrl(day, s, k, n); card.target = '_blank'; card.rel = 'noopener'; }
-  const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', LABELS[state]);
-  ic.innerHTML = ICONS[state];
-  const body = el('div');
-  const top = el('div', 'top'); top.appendChild(el('span', 'name', TYPES[s.type]));
-  const tag = ficheTag(day, s, state); if (tag) top.appendChild(tag);
-  body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
-  if (NO_FICHE[s.type] && state === 'confirm' && confirmKey) body.appendChild(actions(day, s));
-  card.append(ic, body);
-  return card;
-}
+const needsFiche = (day, s, st) => !NO_FICHE[s.type] && s.fiche !== 'ok' && day >= FORM_FROM && (st === 'done' || st === 'confirm');
+/* « Modifier la fiche » : seulement le jour même, avant le passage de la routine du soir (21 h 15), qui lit la fiche une fois
+   (decisions.md 2026-10-20 (neuvième)). Sans identifiant de soumission (fiche lue par la routine), pas de lien. */
+const EDIT_URL = 'https://www.jotform.com/edit/';
+const EDIT_UNTIL = 21 * 60 + 15;
+const canEdit = (day, s) => s.fiche === 'ok' && !!s.sid && day === todayIso && nowMin < EDIT_UNTIL;
 
-/* Confirmation depuis la page (kiné, mental : pas de fiche). Les boutons n'existent que si la clé est dans le navigateur :
-   on l'y met une fois en ouvrant le lien « …/#k=<clé> » (decisions.md 2026-10-20 (cinquième) à (huitième)).
+/* Modifier le planning depuis la page. Les boutons d'écriture n'existent que si la clé est dans le navigateur :
+   on l'y met une fois en ouvrant le lien « …/#k=<clé> » (decisions.md 2026-10-20 (cinquième) à (neuvième)).
    La clé n'est jamais écrite dans ce fichier ni dans la copie publique. L'envoi part vers le relais, qui lance la règle
-   « Séance confirmée » : la page enregistrée se met à jour quelques instants après. */
+   « Séance confirmée » : la page enregistrée se met à jour quelques instants après. Les plafonds ci-dessous sont aussi
+   ceux du script `modifier-planning.py` (qui a le dernier mot) : la page les vérifie d'avance pour le dire à Sarra. */
 const CONFIRM_URL = 'https://relais-jotform.mhaddouk.workers.dev/confirmer';
-const MOTIFS = ['Annulée par le club', 'Douleur', 'Autre'];
+const ORIGINS = ['Le coach', 'Sarra', 'Douleur'];
+const MAX_H = 16, MAX_DAY = 2;
 let confirmKey = '';
 try {
   const m = /[#&]k=([^&]+)/.exec(location.hash);
   if (m) { localStorage.setItem('cle-confirmer', decodeURIComponent(m[1])); history.replaceState(null, '', location.pathname + location.search); }
   confirmKey = localStorage.getItem('cle-confirmer') || '';
 } catch (e) { confirmKey = ''; }
-let asking = null, motifDraft = '', sending = null, failed = null;
-const keyOf = (day, s) => day + s.type;
-async function send(day, s, status, motif) {
-  const k = keyOf(day, s);
-  sending = k; asking = null; failed = null; renderWeek();
-  try {
-    const res = await fetch(CONFIRM_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-cle': confirmKey },
-      body: JSON.stringify({ date: day, type: s.type, statut: status === DONE ? 'faite' : 'pas faite', motif })
-    });
-    if (!res.ok) throw new Error(String(res.status));
-    s.status = status; if (motif) s.motif = motif;
-  } catch (e) { failed = k; }
-  sending = null; motifDraft = ''; renderWeek();
+const ui = { open: null, origin: '', motif: '', add: null, addType: 'tennis', addMode: 'groupe', start: '19:30', end: '21:00', err: '' };
+let sending = null, failed = null, toastTimer;
+const keyOf = (day, s) => day + s.type + s.start;
+const hoursOf = s => (mins(s.end) - mins(s.start)) / 60;
+const weekHours = w => w.days.flat().filter(s => s.start && !NO_FICHE[s.type] && s.status !== SKIP).reduce((a, s) => a + hoursOf(s), 0);
+/* Même nettoyage que `nettoie` dans modifier-planning.py, pour que la page affiche tout de suite ce qui sera écrit. */
+const clean = m => (m || '').replace(/'/g, '’').replace(/"/g, '”').replace(/\\/g, '/').replace(/\(/g, '[').replace(/\)/g, ']').replace(/[<>`\r\n\t]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
 }
-function actions(day, s) {
-  const k = keyOf(day, s), box = el('div', 'acts');
-  if (sending === k) { box.appendChild(el('p', 'detail', 'Envoi…')); return box; }
-  if (asking === k) {
+function run(key, payload, apply, message) {
+  sending = key; failed = null; ui.open = null; ui.err = ''; renderWeek();
+  fetch(CONFIRM_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-cle': confirmKey }, body: JSON.stringify(payload) })
+    .then(res => { if (!res.ok) throw new Error(String(res.status)); apply(); if (message) toast(message); })
+    .catch(() => { failed = key; })
+    .finally(() => { sending = null; renderWeek(); });
+}
+const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); return b; };
+const link = (cls, text, href) => { const a = el('a', cls, text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
+const ident = (day, s) => ({ date: day, type: s.type, start: s.start });
+
+function actions(day, s, st, k, n) {
+  if (!s.start) return null;
+  const key = keyOf(day, s), box = el('div', 'acts');
+  if (sending === key) { box.appendChild(el('p', 'detail', 'Envoi…')); return box; }
+  const open = ui.open && ui.open.key === key ? ui.open.kind : null;
+  if (open === 'cancel' && confirmKey) {
+    const p = el('div', 'panel');
+    p.appendChild(el('span', 'lab', 'Qui annule ?'));
     const chips = el('div', 'chips');
-    MOTIFS.forEach(m => { const b = el('button', '', m); b.type = 'button'; b.setAttribute('aria-pressed', String(motifDraft === m)); b.addEventListener('click', () => { motifDraft = m; renderWeek(); }); chips.appendChild(b); });
-    const go = el('button', 'go', 'Envoyer'); go.type = 'button'; go.disabled = !motifDraft;
-    go.addEventListener('click', () => send(day, s, SKIP, motifDraft));
-    const back = el('button', 'no', 'Annuler'); back.type = 'button'; back.addEventListener('click', () => { asking = null; motifDraft = ''; renderWeek(); });
-    box.append(chips, go, back); return box;
+    ORIGINS.forEach(o => { const b = btn('', o, () => { ui.origin = o; renderWeek(); }); b.setAttribute('aria-pressed', String(ui.origin === o)); chips.appendChild(b); });
+    const lab = el('label', '', 'Motif (facultatif)'); lab.htmlFor = 'motif';
+    const ta = el('textarea'); ta.id = 'motif'; ta.maxLength = 120; ta.placeholder = 'Pluie, terrain indisponible, examen demain…'; ta.value = ui.motif;
+    ta.addEventListener('input', () => { ui.motif = ta.value; });
+    const row = el('div', 'acts');
+    const go = btn('btn fill', 'Envoyer', () => {
+      const origine = ui.origin, motif = clean(ui.motif);
+      run(key, { action: 'annulee', ...ident(day, s), origine, motif }, () => { s.status = SKIP; s.motif = [origine, motif].filter(Boolean).join(' · '); },
+        origine === 'Douleur' ? 'Annulée. Papa est prévenu tout de suite.' : 'Annulée. Papa est prévenu.');
+    });
+    go.disabled = !ui.origin;
+    row.append(go, btn('quiet', 'Retour', () => { ui.open = null; renderWeek(); }));
+    p.append(chips, lab, ta, row); box.appendChild(p); return box;
   }
-  if (failed === k) box.appendChild(el('p', 'err', 'Envoi impossible. Réessaie, ou préviens Mourad.'));
-  const yes = el('button', 'yes', 'Faite'); yes.type = 'button'; yes.addEventListener('click', () => send(day, s, DONE));
-  const no = el('button', 'no', 'Pas faite'); no.type = 'button'; no.addEventListener('click', () => { asking = k; motifDraft = ''; failed = null; renderWeek(); });
-  box.append(yes, no); return box;
+  if (open === 'delete' && confirmKey) {
+    const p = el('div', 'panel');
+    p.appendChild(el('p', 'ask', 'Supprimer cette séance du planning ? Elle disparaît, sans trace sur la page.'));
+    const row = el('div', 'acts');
+    row.append(btn('btn warn fill', 'Supprimer', () => {
+      run(key, { action: 'supprimer', ...ident(day, s) }, () => { const d = WEEKS[current].days; const i = d.findIndex(g => g.includes(s)); d[i] = d[i].filter(x => x !== s); }, 'Séance supprimée. Papa est prévenu.');
+    }), btn('btn', 'Garder', () => { ui.open = null; renderWeek(); }));
+    p.appendChild(row); box.appendChild(p); return box;
+  }
+  if (failed === key) box.appendChild(el('p', 'err', 'Envoi impossible. Réessaie, ou préviens Mourad.'));
+  if (st === 'skipped') {
+    if (confirmKey) box.appendChild(btn('quiet', 'Rétablir la séance', () => run(key, { action: 'retablir', ...ident(day, s) }, () => { s.status = PLAN; delete s.motif; }, 'Séance rétablie.')));
+  } else {
+    if (NO_FICHE[s.type] && st === 'confirm' && confirmKey) box.appendChild(btn('btn fill', 'Faite', () => run(key, { action: 'faite', ...ident(day, s) }, () => { s.status = DONE; }, 'Marquée faite.')));
+    if (needsFiche(day, s, st)) box.appendChild(link('btn fill', 'Remplir la fiche', ficheUrl(day, s, k, n)));
+    else if (canEdit(day, s)) box.appendChild(link('btn', 'Modifier la fiche', EDIT_URL + s.sid));
+    if (confirmKey && st !== 'done') box.appendChild(btn('btn warn', 'Annulée', () => { ui.open = { key, kind: 'cancel' }; ui.origin = ''; ui.motif = ''; ui.add = null; failed = null; renderWeek(); }));
+    if (confirmKey && st === 'planned' && s.fiche !== 'ok') box.appendChild(btn('quiet del', 'Supprimer', () => { ui.open = { key, kind: 'delete' }; ui.add = null; failed = null; renderWeek(); }));
+  }
+  if (!box.children.length) return null;
+  if (!failed) box.classList.add('one');
+  return box;
+}
+
+/* Groupe ou spécifique, quand le planning ne le dit pas encore. */
+function modePick(day, s) {
+  const r = el('div', 'pick'); r.appendChild(el('span', 'detail', 'Mode ?'));
+  const c = el('div', 'chips');
+  Object.keys(MODES).forEach(m => c.appendChild(btn('', MODES[m], () => run(keyOf(day, s), { action: 'mode', ...ident(day, s), mode: m }, () => { s.mode = m; }, 'Mode noté.'))));
+  r.appendChild(c); return r;
+}
+
+/* k = rang de la séance dans la journée (0, 1…), n = nombre de séances avec fiche ce jour-là. */
+function sessionCard(day, s, k, n) {
+  const state = stateOf(day, s);
+  const card = el('div', 'card ' + state);
+  const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', LABELS[state]);
+  ic.innerHTML = ICONS[state];
+  const body = el('div');
+  const top = el('div', 'top');
+  const who = el('span', 'who'); who.appendChild(el('span', 'name', TYPES[s.type]));
+  if (s.mode && MODES[s.mode]) who.appendChild(el('span', 'mode ' + (s.mode === 'groupe' ? 'g' : 's'), MODES[s.mode]));
+  top.appendChild(who);
+  if (state === 'skipped') top.appendChild(el('span', 'tag f-skip', 'Annulée'));
+  else if (!NO_FICHE[s.type] && s.fiche === 'ok') top.appendChild(el('span', 'tag f-ok', 'Fiche reçue'));
+  body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
+  if (confirmKey && !NO_FICHE[s.type] && s.start && !s.mode && state !== 'skipped') body.appendChild(modePick(day, s));
+  const acts = actions(day, s, state, k, n); if (acts) body.appendChild(acts);
+  card.append(ic, body);
+  return card;
+}
+
+function addBox(day, di) {
+  const key = 'add' + day;
+  const box = el('div', 'addbox'), p = el('div', 'panel'); p.style.marginTop = '0';
+  if (sending === key) { p.appendChild(el('p', 'detail', 'Envoi…')); box.appendChild(p); return box; }
+  p.appendChild(el('span', 'lab', 'Type'));
+  const t = el('div', 'chips');
+  Object.keys(TYPES).forEach(x => { const b = btn('', TYPES[x], () => { ui.addType = x; ui.err = ''; renderWeek(); }); b.setAttribute('aria-pressed', String(ui.addType === x)); t.appendChild(b); });
+  p.appendChild(t);
+  if (!NO_FICHE[ui.addType]) {
+    p.appendChild(el('span', 'lab', 'Mode'));
+    const m = el('div', 'chips');
+    Object.keys(MODES).forEach(x => { const b = btn('', MODES[x], () => { ui.addMode = x; renderWeek(); }); b.setAttribute('aria-pressed', String(ui.addMode === x)); m.appendChild(b); });
+    p.appendChild(m);
+  }
+  const tm = el('div', 'times');
+  [['Début', 'start'], ['Fin', 'end']].forEach(([l, f]) => {
+    const d = el('div'), lab = el('label', '', l); lab.htmlFor = 'add-' + f;
+    const i = el('input'); i.type = 'time'; i.id = 'add-' + f; i.value = ui[f]; i.addEventListener('input', () => { ui[f] = i.value; });
+    d.append(lab, i); tm.appendChild(d);
+  });
+  p.appendChild(tm);
+  if (failed === key) ui.err = 'Envoi impossible. Réessaie, ou préviens Mourad.';
+  if (ui.err) p.appendChild(el('p', 'err', ui.err));
+  const row = el('div', 'acts');
+  row.append(btn('btn fill', 'Ajouter', () => {
+    const w = WEEKS[current], list = w.days[di], withFiche = !NO_FICHE[ui.addType];
+    if (!ui.start || !ui.end || mins(ui.end) <= mins(ui.start)) { ui.err = 'L’heure de fin doit être après le début.'; return renderWeek(); }
+    if (list.some(x => x.type === ui.addType && x.start === ui.start)) { ui.err = 'Cette séance existe déjà.'; return renderWeek(); }
+    const s = { type: ui.addType, mode: withFiche ? ui.addMode : null, start: ui.start, end: ui.end, status: PLAN };
+    if (withFiche && list.filter(x => !NO_FICHE[x.type] && x.status !== SKIP).length >= MAX_DAY) { ui.err = 'Déjà ' + MAX_DAY + ' séances de tennis ou physique ce jour-là.'; return renderWeek(); }
+    if (withFiche && weekHours(w) + hoursOf(s) > MAX_H) { ui.err = 'Ça dépasse ' + MAX_H + ' h de tennis et physique cette semaine. Parles-en à Papa.'; return renderWeek(); }
+    const payload = { action: 'ajouter', date: day, type: s.type, start: s.start, end: s.end };
+    if (withFiche) payload.mode = s.mode;
+    run(key, payload, () => { ui.add = null; list.push(s); list.sort((a, b) => (a.start || '99:99').localeCompare(b.start || '99:99')); }, 'Séance ajoutée. Papa est prévenu.');
+  }), btn('quiet', 'Retour', () => { ui.add = null; ui.err = ''; renderWeek(); }));
+  p.appendChild(row); box.appendChild(p); return box;
 }
 
 const start = pickWeek(WEEKS, todayIso);
@@ -318,10 +424,13 @@ function renderWeek() {
     const b = el('button', '', wk.label);
     b.type = 'button'; b.id = 'seg-' + i;
     b.setAttribute('aria-pressed', String(i === current));
-    b.addEventListener('click', () => { current = i; renderWeek(); });
+    b.addEventListener('click', () => { current = i; ui.open = null; ui.add = null; ui.err = ''; renderWeek(); });
     seg.appendChild(b);
   });
   $('range').textContent = rangeLabel(w.from);
+  const h = weekHours(w), total = $('total');
+  total.textContent = 'Tennis et physique prévus : ' + String(h).replace('.', ',') + ' h sur ' + MAX_H + ' h.';
+  total.className = 'total' + (h > MAX_H ? ' over' : '');
   const notice = $('notice');
   const last = addDays(WEEKS[WEEKS.length - 1].from, 6);
   notice.hidden = start.where === 'in';
@@ -335,12 +444,21 @@ function renderWeek() {
     const slots = el('div', 'slots');
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
     else { const fs = sessions.filter(x => !NO_FICHE[x.type]); sessions.forEach(s => slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length))); }
+    if (confirmKey) {
+      if (ui.add === day) slots.appendChild(addBox(day, i));
+      else {
+        const a = el('div', 'add');
+        a.appendChild(btn('quiet', '+ Ajouter une séance', () => { ui.add = day; ui.open = null; ui.err = ''; failed = null; renderWeek(); }));
+        slots.appendChild(a);
+      }
+    }
     li.append(date, slots); list.appendChild(li);
   });
 }
 $('foot').textContent = 'Mis à jour le ' + longDate(UPDATED) + '.';
 renderWeek();
-/* Une page laissée ouverte suit l'heure : une séance qui se termine passe « à confirmer » et ouvre sa fiche sans recharger. */
-setInterval(() => { clock(); renderWeek(); }, 60000);
+/* Une page laissée ouverte suit l'heure : une séance qui se termine passe « à confirmer » et ouvre sa fiche sans recharger.
+   On ne redessine pas pendant qu'un panneau est ouvert, pour ne pas faire perdre le texte en cours de saisie. */
+setInterval(() => { clock(); if (!ui.open && ui.add === null && !sending) renderWeek(); }, 60000);
 </script>
 </html>
