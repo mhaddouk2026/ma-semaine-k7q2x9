@@ -386,7 +386,7 @@ const ficheOk = () => { const f = el('span', 'fiche-ok'); f.innerHTML = ICON.che
 const link = (cls, text, href) => { const a = el('a', cls, text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
 const ident = (day, s) => ({ date: day, type: s.type, start: s.start });
 
-function actions(day, s, st, k, n) {
+function actions(day, s, st, k, n, sessions) {
   if (!s.start) return null;
   const key = keyOf(day, s), box = el('div', 'acts');
   if (queued(key)) { box.appendChild(el('p', 'detail', state(key))); return box; }
@@ -502,7 +502,7 @@ function sessionCard(day, s, k, n, sessions) {
   else if (!NO_FICHE[s.type] && s.fiche === 'ok') top.appendChild(ficheOk());
   body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
   if (confirmKey && !NO_FICHE[s.type] && s.start && !s.mode && state !== 'skipped') body.appendChild(modePick(day, s));
-  const acts = actions(day, s, state, k, n); if (acts) body.appendChild(acts);
+  const acts = actions(day, s, state, k, n, sessions); if (acts) body.appendChild(acts);
   card.append(ic, body);
   return card;
 }
