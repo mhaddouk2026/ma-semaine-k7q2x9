@@ -316,6 +316,30 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.hidden = false;
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3500);
 }
+/* Un changement accepté par le relais est appliqué à la page tout de suite, puis gardé 20 minutes dans ce navigateur et rejoué au
+   chargement : la page publiée ne se met à jour que 2 à 12 minutes plus tard (génération + cache GitHub Pages, max-age=600). Sans ça, un
+   rechargement juste après un changement ressortait l'ancien planning. Chaque action est sans effet si la page publiée l'a déjà reçue. */
+const RECENT_KEY = 'changements-recents', RECENT_MS = 20 * 60 * 1000;
+function applyPayload(p) {
+  const w = WEEKS.find(x => p.date >= x.from && p.date <= addDays(x.from, 6)); if (!w) return;
+  const di = Math.round((parse(p.date) - parse(w.from)) / 864e5), list = w.days[di]; if (!list) return;
+  const s = list.find(x => x.type === p.type && x.start === p.start);
+  if (p.action === 'ajouter') {
+    if (s) return;
+    const n = { type: p.type, mode: p.mode || null, start: p.start, end: p.end, status: PLAN };
+    list.push(n); list.sort((a, b) => (a.start || '99:99').localeCompare(b.start || '99:99')); return;
+  }
+  if (!s) return;
+  if (p.action === 'annulee') { s.status = SKIP; s.motif = [p.origine, p.motif].filter(Boolean).join(' · '); }
+  else if (p.action === 'retablir') { s.status = PLAN; delete s.motif; }
+  else if (p.action === 'faite') s.status = DONE;
+  else if (p.action === 'mode') s.mode = p.mode;
+  else if (p.action === 'supprimer') w.days[di] = list.filter(x => x !== s);
+}
+function recent() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').filter(r => r && r.p && Date.now() - r.t < RECENT_MS); } catch (e) { return []; }
+}
+function remember(p) { try { localStorage.setItem(RECENT_KEY, JSON.stringify(recent().concat({ p, t: Date.now() }))); } catch (e) {} }
 /* Les changements partent un par un, GAP_MS d'écart : la règle GitHub ne garde qu'une exécution en attente derrière celle qui tourne, une rafale de clics en perdrait. */
 const GAP_MS = 15000, queue = [];
 let busy = false, lastSent = 0;
@@ -328,14 +352,14 @@ function pump() {
   setTimeout(() => {
     j.started = true; renderWeek();
     fetch(CONFIRM_URL, { method: 'POST', headers: { 'content-type': 'application/json', 'x-cle': confirmKey }, body: JSON.stringify(j.payload) })
-      .then(res => { if (!res.ok) throw new Error(String(res.status)); j.apply(); if (j.message) toast(j.message); })
+      .then(res => { if (!res.ok) throw new Error(String(res.status)); applyPayload(j.payload); remember(j.payload); ui.add = null; if (j.message) toast(j.message); })
       .catch(() => { failed = j.key; })
       .finally(() => { queue.shift(); lastSent = Date.now(); busy = false; renderWeek(); pump(); });
   }, Math.max(0, lastSent + GAP_MS - Date.now()));
 }
-function run(key, payload, apply, message) {
+function run(key, payload, message) {
   failed = null; ui.open = null; ui.err = '';
-  queue.push({ key, payload, apply, message, started: false });
+  queue.push({ key, payload, message, started: false });
   renderWeek(); pump();
 }
 window.addEventListener('beforeunload', e => { if (queue.length) { e.preventDefault(); e.returnValue = ''; } });
@@ -368,7 +392,7 @@ function actions(day, s, st, k, n) {
     const row = el('div', 'acts');
     const go = btn('btn fill', 'Envoyer', () => {
       const origine = ui.origin, motif = clean(ui.motif);
-      run(key, { action: 'annulee', ...ident(day, s), origine, motif }, () => { s.status = SKIP; s.motif = [origine, motif].filter(Boolean).join(' · '); },
+      run(key, { action: 'annulee', ...ident(day, s), origine, motif: clean(motif) },
         origine === 'Douleur' ? 'Annulée. Papa est prévenu tout de suite.' : 'Annulée. Papa est prévenu.');
     });
     go.disabled = !ui.origin;
@@ -380,15 +404,15 @@ function actions(day, s, st, k, n) {
     p.appendChild(el('p', 'ask', 'Supprimer cette séance du planning ? Elle disparaît, sans trace sur la page.'));
     const row = el('div', 'acts');
     row.append(btn('btn warn fill', 'Supprimer', () => {
-      run(key, { action: 'supprimer', ...ident(day, s) }, () => { const d = WEEKS[current].days; const i = d.findIndex(g => g.includes(s)); d[i] = d[i].filter(x => x !== s); }, 'Séance supprimée. Papa est prévenu.');
+      run(key, { action: 'supprimer', ...ident(day, s) }, 'Séance supprimée. Papa est prévenu.');
     }), btn('btn', 'Garder', () => { ui.open = null; renderWeek(); }));
     p.appendChild(row); box.appendChild(p); return box;
   }
   if (failed === key) box.appendChild(el('p', 'err', 'Envoi impossible. Réessaie, ou préviens Mourad.'));
   if (st === 'skipped') {
-    if (confirmKey && (day > todayIso || (day === todayIso && nowMin < EDIT_UNTIL))) box.appendChild(ibtn('', 'Rétablir la séance', ICON.restore, () => run(key, { action: 'retablir', ...ident(day, s) }, () => { s.status = PLAN; delete s.motif; }, 'Séance rétablie.')));
+    if (confirmKey && (day > todayIso || (day === todayIso && nowMin < EDIT_UNTIL))) box.appendChild(ibtn('', 'Rétablir la séance', ICON.restore, () => run(key, { action: 'retablir', ...ident(day, s) }, 'Séance rétablie.')));
   } else {
-    if (NO_FICHE[s.type] && st === 'confirm' && confirmKey) box.appendChild(ibtn('ok', 'Marquer faite', ICON.check, () => run(key, { action: 'faite', ...ident(day, s) }, () => { s.status = DONE; }, 'Marquée faite.')));
+    if (NO_FICHE[s.type] && st === 'confirm' && confirmKey) box.appendChild(ibtn('ok', 'Marquer faite', ICON.check, () => run(key, { action: 'faite', ...ident(day, s) }, 'Marquée faite.')));
     if (needsFiche(day, s, st)) box.appendChild(link('btn fill', 'Remplir la fiche', ficheUrl(day, s, k, n)));
     else if (canEdit(day, s)) box.appendChild(link('btn', 'Modifier la fiche', EDIT_URL + s.sid));
     if (confirmKey && st !== 'done') box.appendChild(ibtn('warn', 'Annuler la séance', ICON.x, () => { ui.open = { key, kind: 'cancel' }; ui.origin = ''; ui.motif = ''; ui.add = null; failed = null; renderWeek(); }));
@@ -403,7 +427,7 @@ function actions(day, s, st, k, n) {
 function modePick(day, s) {
   const r = el('div', 'pick'); r.appendChild(el('span', 'detail', 'Mode ?'));
   const c = el('div', 'chips');
-  Object.keys(MODES).forEach(m => c.appendChild(btn('', MODES[m], () => run(keyOf(day, s), { action: 'mode', ...ident(day, s), mode: m }, () => { s.mode = m; }, 'Mode noté.'))));
+  Object.keys(MODES).forEach(m => c.appendChild(btn('', MODES[m], () => run(keyOf(day, s), { action: 'mode', ...ident(day, s), mode: m }, 'Mode noté.'))));
   r.appendChild(c); return r;
 }
 
@@ -492,11 +516,12 @@ function addBox(day, di) {
     if (withFiche && weekHours(w) + hoursOf(s) > MAX_H) { ui.err = 'Ça dépasse ' + MAX_H + ' h de tennis et physique cette semaine. Parles-en à Papa.'; return renderWeek(); }
     const payload = { action: 'ajouter', date: day, type: s.type, start: s.start, end: s.end };
     if (withFiche) payload.mode = s.mode;
-    run(key, payload, () => { ui.add = null; list.push(s); list.sort((a, b) => (a.start || '99:99').localeCompare(b.start || '99:99')); }, 'Séance ajoutée. Papa est prévenu.');
+    run(key, payload, 'Séance ajoutée. Papa est prévenu.');
   }), btn('quiet', 'Retour', () => { ui.add = null; ui.err = ''; renderWeek(); }));
   p.appendChild(row); box.appendChild(p); return box;
 }
 
+recent().forEach(r => applyPayload(r.p));
 const start = pickWeek(WEEKS, todayIso);
 let current = start.index;
 
