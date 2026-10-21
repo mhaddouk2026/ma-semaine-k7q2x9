@@ -196,7 +196,7 @@ textarea { resize: vertical; min-height: 64px; }
 <script>
 /* Données : on modifie seulement ce bloc quand le planning change.
    statut : 'done' = fait, 'planned' = prévu, 'skipped' = annulée (motif en 7ᵉ argument de S : « origine · texte libre », ex. « Le coach · pluie »).
-   Arguments de S : type, mode ('groupe' | 'spécifique' | null), début, fin, statut, fiche, motif, sid (identifiant de la soumission Jotform, pour « Modifier la fiche »).
+   Arguments de S : type, mode ('groupe' | 'spécifique' | null), début, fin, statut, fiche, motif, sid (identifiant de la soumission Jotform, pour « Modifier la fiche »), warm (échauffement, question 3c : 'entier' | 'partie' | 'non', posé par poser-echauffement.py ; absent = non noté).
    Une séance 'planned' dont l’heure de fin est passée s’affiche « à confirmer » toute seule : jamais « faite » par défaut (decisions.md 2026-10-18 (deuxième)).
    fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
    FORM_FROM sans 'ok' affiche le bouton « Remplir la fiche », qui ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
@@ -205,7 +205,7 @@ const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
 const NO_FICHE = { mental: true, kine: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
 const DONE = 'done', PLAN = 'planned', SKIP = 'skipped';
-const S = (type, mode, start, end, status, fiche, motif, sid) => ({ type, mode, start, end, status, fiche, motif, sid });
+const S = (type, mode, start, end, status, fiche, motif, sid, warm) => ({ type, mode, start, end, status, fiche, motif, sid, warm });
 const P = (type, dur) => ({ type, dur, status: PLAN });
 const WEEKS = [
   { from: '2026-10-12', label: 'Semaine dernière',
@@ -423,7 +423,7 @@ function warmFor(sessions, s) {
   const when = prev && prev.end && mins(prev.end) > from ? '' : fmtT(String(Math.floor(from / 60)).padStart(2, '0') + ':' + String(from % 60).padStart(2, '0')) + ' – ' + fmtT(s.start);
   return { title, min, when };
 }
-/* Statut de l'échauffement (question 3c) : s.warm = 'ok' | 'part' | 'non', pas encore alimenté par le registre. Sans lui, ligne neutre. */
+/* Statut de l'échauffement (question 3c) : s.warm = 'entier' | 'partie' | 'non' (WARM_FROM), posé depuis le registre par poser-echauffement.py. Sans lui, ligne neutre. */
 /* Mêmes icônes et couleurs que le statut d'une séance : fait = coche verte, à confirmer = point d'interrogation ambre, pas fait = croix grise. */
 const WARM_ST = { ok: ['done', 'Fait'], part: ['part', 'En partie'], non: ['skipped', 'Pas fait'], wait: ['confirm', 'Fiche à remplir'] };
 ICONS.part = SVG('<circle cx="11" cy="11" r="9.6" class="i-pring"/><path d="M11 4.5a6.5 6.5 0 0 0 0 13z" class="i-half"/>');
