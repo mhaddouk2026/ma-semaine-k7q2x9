@@ -260,11 +260,14 @@ const MODES = { 'groupe': 'Groupe', 'spécifique': 'Spécifique' };
    Un type absent d'ici (mental) n'est pas prérempli ; au-delà de deux séances le même jour, le rang non plus. */
 const FORM_TYPE = { tennis: 'Tennis (entraînement)', physique: 'Physique' };
 const FORM_RANK = { 1: ["La seule aujourd'hui"], 2: ["La 1ère séance aujourd'hui", "La 2ème séance aujourd'hui"] };
-function ficheUrl(day, s, k, n) {
+/* etirement / echauffement = champs cachés du formulaire : la fiche ne pose 3d / 3c que si la page dit « oui » (decisions.md 2026-10-21 (vingt et unième)).
+   Sans ces paramètres (fiche ouverte hors de la page), le formulaire montre les deux questions. */
+function ficheUrl(day, s, k, n, sessions) {
   const d = parse(day);
   const q = ['q3_datetime1[day]=' + d.getDate(), 'q3_datetime1[month]=' + (d.getMonth() + 1), 'q3_datetime1[year]=' + d.getFullYear()];
   if (FORM_TYPE[s.type]) q.push('q4_radio2=' + encodeURIComponent(FORM_TYPE[s.type]));
   if (FORM_RANK[n]) q.push('q6_radio4=' + encodeURIComponent(FORM_RANK[n][k]));
+  if (sessions) q.push('etirement=' + (lastStretch(sessions, s) ? 'oui' : 'non'), 'echauffement=' + (warmFor(sessions, s) ? 'oui' : 'non'));
   return FORM_URL + '?' + q.join('&');
 }
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -420,7 +423,7 @@ function actions(day, s, st, k, n) {
     if (confirmKey && (day > todayIso || (day === todayIso && nowMin < EDIT_UNTIL))) box.appendChild(ibtn('', 'Rétablir la séance', ICON.restore, () => run(key, { action: 'retablir', ...ident(day, s) }, 'Séance rétablie.')));
   } else {
     if (NO_FICHE[s.type] && st === 'confirm' && confirmKey) box.appendChild(ibtn('ok', 'Marquer faite', ICON.check, () => run(key, { action: 'faite', ...ident(day, s) }, 'Marquée faite.')));
-    if (needsFiche(day, s, st)) box.appendChild(link('btn fill', 'Remplir la fiche', ficheUrl(day, s, k, n)));
+    if (needsFiche(day, s, st)) box.appendChild(link('btn fill', 'Remplir la fiche', ficheUrl(day, s, k, n, sessions)));
     else if (canEdit(day, s)) box.appendChild(link('btn', 'Modifier la fiche', EDIT_URL + s.sid));
     if (confirmKey && st !== 'done') box.appendChild(ibtn('warn', 'Annuler la séance', ICON.x, () => { ui.open = { key, kind: 'cancel' }; ui.origin = ''; ui.motif = ''; ui.add = null; failed = null; renderWeek(); }));
     if (confirmKey && st === 'planned' && s.fiche !== 'ok') box.appendChild(ibtn('warn', 'Supprimer la séance', ICON.trash, () => { ui.open = { key, kind: 'delete' }; ui.add = null; failed = null; renderWeek(); }));
@@ -469,6 +472,14 @@ function warmRow(w, st) {
 
 /* Étirements après une séance (2-plan/etirements.md § 3 : bloc « Jambes » après le physique, bloc « Tennis » après le tennis) : une ligne de texte, sans statut ni lien. */
 const STRETCH_TYPES = { tennis: 'le tennis', physique: 'le physique' };
+/* Pas d'étirement entre deux séances qui s'enchaînent (moins d'1 h entre la fin de l'une et le début de l'autre) : après la dernière séance
+   (tennis ou physique, hors annulées) de la journée, et après toute séance dont la suivante commence plus d'1 h après (decisions.md 2026-10-21 (vingtième)). Heures inconnues : on les prend pour enchaînées. */
+function lastStretch(sessions, s) {
+  const live = sessions.filter(x => (x.type === 'tennis' || x.type === 'physique') && x.status !== SKIP);
+  const k = live.indexOf(s), next = live[k + 1];
+  if (STRETCH_TYPES[s.type] === undefined || k < 0) return false;
+  return !next || !!(s.end && next.start && mins(next.start) - mins(s.end) > 60);
+}
 function stretchRow(type, st) {
   const d = el('div', 'stretch' + (st ? ' w-' + st : ''));
   if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', WARM_ST[st][1]); d.append(ic); }
@@ -477,7 +488,7 @@ function stretchRow(type, st) {
 }
 
 /* k = rang de la séance dans la journée (0, 1…), n = nombre de séances avec fiche ce jour-là. */
-function sessionCard(day, s, k, n) {
+function sessionCard(day, s, k, n, sessions) {
   const state = stateOf(day, s);
   const card = el('div', 'card ' + state);
   const ic = el('span', 'ic'); ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', LABELS[state]);
@@ -574,7 +585,7 @@ function renderWeek() {
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
     else {
       const fs = sessions.filter(x => !NO_FICHE[x.type]);
-      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length)); if (STRETCH_TYPES[s.type] && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type,day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
+      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length, sessions)); if (lastStretch(sessions, s) && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type,day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
     }
     if (confirmKey) {
       if (ui.add === day) slots.appendChild(addBox(day, i));
