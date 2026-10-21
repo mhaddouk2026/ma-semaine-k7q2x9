@@ -132,6 +132,12 @@ p { margin: 0; }
 .warm.w-non { border-left-color: var(--muted); background: transparent; }
 .warm.w-non .wt { color: var(--muted); }
 .warm:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.stretch { display: flex; align-items: center; gap: 8px; min-height: 36px; margin: 0 0 6px; padding: 4px 12px; border-left: 3px solid var(--muted); border-radius: 8px; color: var(--muted); font-size: 14px; }
+.stretch .ic { flex: none; }
+.stretch.w-ok { border-left-color: var(--ok); }
+.stretch.w-part { border-left-color: var(--part); }
+.stretch.w-wait { border-left-color: var(--hold-ink); }
+.stretch .wt { font-weight: 600; color: var(--ink); }
 .acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
 .acts.one { flex-wrap: nowrap; }
 .who { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
@@ -196,7 +202,7 @@ textarea { resize: vertical; min-height: 64px; }
 <script>
 /* Données : on modifie seulement ce bloc quand le planning change.
    statut : 'done' = fait, 'planned' = prévu, 'skipped' = annulée (motif en 7ᵉ argument de S : « origine · texte libre », ex. « Le coach · pluie »).
-   Arguments de S : type, mode ('groupe' | 'spécifique' | null), début, fin, statut, fiche, motif, sid (identifiant de la soumission Jotform, pour « Modifier la fiche »), warm (échauffement, question 3c : 'entier' | 'partie' | 'non', posé par poser-echauffement.py ; absent = non noté).
+   Arguments de S : type, mode ('groupe' | 'spécifique' | null), début, fin, statut, fiche, motif, sid (identifiant de la soumission Jotform, pour « Modifier la fiche »), warm (échauffement, question 3c : 'entier' | 'partie' | 'non', posé par poser-echauffement.py ; absent = non noté), stretch (étirements après le tennis, question 3d : mêmes valeurs, posé par le même script).
    Une séance 'planned' dont l’heure de fin est passée s’affiche « à confirmer » toute seule : jamais « faite » par défaut (decisions.md 2026-10-18 (deuxième)).
    fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
    FORM_FROM sans 'ok' affiche le bouton « Remplir la fiche », qui ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
@@ -205,7 +211,7 @@ const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
 const NO_FICHE = { mental: true, kine: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
 const DONE = 'done', PLAN = 'planned', SKIP = 'skipped';
-const S = (type, mode, start, end, status, fiche, motif, sid, warm) => ({ type, mode, start, end, status, fiche, motif, sid, warm });
+const S = (type, mode, start, end, status, fiche, motif, sid, warm, stretch) => ({ type, mode, start, end, status, fiche, motif, sid, warm, stretch });
 const P = (type, dur) => ({ type, dur, status: PLAN });
 const WEEKS = [
   { from: '2026-10-12', label: 'Semaine dernière',
@@ -461,6 +467,14 @@ function warmRow(w, st) {
   return d;
 }
 
+/* Étirements après une séance de tennis (2-plan/etirements.md § 3, bloc « Tennis ») : une ligne de texte, sans statut ni lien. */
+function stretchRow(st) {
+  const d = el('div', 'stretch' + (st ? ' w-' + st : ''));
+  if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', WARM_ST[st][1]); d.append(ic); }
+  d.appendChild(el('span', 'wt', 'Étirements après le tennis · 10 min'));
+  return d;
+}
+
 /* k = rang de la séance dans la journée (0, 1…), n = nombre de séances avec fiche ce jour-là. */
 function sessionCard(day, s, k, n) {
   const state = stateOf(day, s);
@@ -559,7 +573,7 @@ function renderWeek() {
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
     else {
       const fs = sessions.filter(x => !NO_FICHE[x.type]);
-      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length)); });
+      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length)); if (s.type === 'tennis' && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
     }
     if (confirmKey) {
       if (ui.add === day) slots.appendChild(addBox(day, i));
