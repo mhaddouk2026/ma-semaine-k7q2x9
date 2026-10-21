@@ -432,18 +432,15 @@ function modePick(day, s) {
   r.appendChild(c); return r;
 }
 
-/* Échauffement attendu avant une séance (2-plan/echauffement.md § 2, provisoire, decisions.md 2026-10-21 (dixième)) :
-   première séance du jour (tennis ou physique, hors annulées) = physique : partie 1, tennis : parties 1 et 2 ;
-   tennis qui suit une autre séance = partie 2 ; le reste, rien. Durées inférées, jamais mesurées. */
+/* Échauffement attendu avant une séance (2-plan/echauffement.md § 2, decisions.md 2026-10-21 (quinzième)) :
+   seulement si la première séance du jour (tennis ou physique, hors annulées) est du tennis, et alors complet (parties 1 et 2) ;
+   le reste, rien. Durée inférée, jamais mesurée. */
 const WARM_URL = 'https://claude.ai/artifact/NqPqPDKpETbDsHsP64r5yF';
 function warmFor(sessions, s) {
   const live = sessions.filter(x => (x.type === 'tennis' || x.type === 'physique') && x.status !== SKIP);
   const k = live.indexOf(s);
-  if (k < 0 || !s.start) return null;
-  let title, min;
-  if (k === 0) { title = s.type === 'tennis' ? 'Échauffement complet' : 'Échauffement'; min = s.type === 'physique' ? 10 : 20; }
-  else if (s.type === 'tennis') { title = 'Échauffement'; min = 10; }
-  else return null;
+  if (k !== 0 || s.type !== 'tennis' || !s.start) return null;
+  const title = 'Échauffement complet', min = 20;
   const from = mins(s.start) - min, prev = live[k - 1];
   const when = prev && prev.end && mins(prev.end) > from ? '' : fmtT(String(Math.floor(from / 60)).padStart(2, '0') + ':' + String(from % 60).padStart(2, '0')) + ' – ' + fmtT(s.start);
   return { title, min, when };
