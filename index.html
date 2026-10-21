@@ -467,11 +467,12 @@ function warmRow(w, st) {
   return d;
 }
 
-/* Étirements après une séance de tennis (2-plan/etirements.md § 3, bloc « Tennis ») : une ligne de texte, sans statut ni lien. */
-function stretchRow(st) {
+/* Étirements après une séance (2-plan/etirements.md § 3 : bloc « Jambes » après le physique, bloc « Tennis » après le tennis) : une ligne de texte, sans statut ni lien. */
+const STRETCH_TYPES = { tennis: 'le tennis', physique: 'le physique' };
+function stretchRow(type, st) {
   const d = el('div', 'stretch' + (st ? ' w-' + st : ''));
   if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', WARM_ST[st][1]); d.append(ic); }
-  d.appendChild(el('span', 'wt', 'Étirements après le tennis · 10 min'));
+  d.appendChild(el('span', 'wt', 'Étirements après ' + STRETCH_TYPES[type] + ' · 10 min'));
   return d;
 }
 
@@ -573,7 +574,7 @@ function renderWeek() {
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
     else {
       const fs = sessions.filter(x => !NO_FICHE[x.type]);
-      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length)); if (s.type === 'tennis' && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
+      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length)); if (STRETCH_TYPES[s.type] && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type,day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
     }
     if (confirmKey) {
       if (ui.add === day) slots.appendChild(addBox(day, i));
