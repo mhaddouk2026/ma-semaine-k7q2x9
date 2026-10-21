@@ -27,6 +27,7 @@
   --hold-bg: #FFF1D6;
   --hold-ink: #7A4A06;
   --ok: #1B7A4B;
+  --part: #7CC79A;
   --ok-tick: #FFFFFF;
   --danger: #B3261E;
   --font-display: 'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
@@ -36,13 +37,13 @@
   :root:not([data-theme="light"]) {
     --bg: #0C1722; --surface: #132231; --ink: #E7EDF3; --muted: #98A9BA; --line: #23384B;
     --accent: #6BA2FF; --accent-ink: #07203F; --accent-soft: #17335A; --rest: #101E2B;
-    --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; --danger: #FF9C94; color-scheme: dark;
+    --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --part: #A6E3BE; --ok-tick: #07241A; --danger: #FF9C94; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0C1722; --surface: #132231; --ink: #E7EDF3; --muted: #98A9BA; --line: #23384B;
   --accent: #6BA2FF; --accent-ink: #07203F; --accent-soft: #17335A; --rest: #101E2B;
-  --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --ok-tick: #07241A; --danger: #FF9C94; color-scheme: dark;
+  --hold-bg: #3A2A0B; --hold-ink: #F3C877; --ok: #62D393; --part: #A6E3BE; --ok-tick: #07241A; --danger: #FF9C94; color-scheme: dark;
 }
 
 body {
@@ -113,6 +114,24 @@ p { margin: 0; }
 .ibtn.warn { border-color: var(--danger); color: var(--danger); }
 .ibtn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
+.warm { margin: 0 0 6px; border-left: 3px solid var(--accent); border-radius: 8px; background: var(--accent-soft); color: var(--ink); font-size: 14px; }
+.warm > summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 36px; padding: 4px 12px; cursor: pointer; list-style: none; }
+.warm > summary::-webkit-details-marker { display: none; }
+.warm > .go { display: block; padding: 0 12px 8px; }
+.warm .wt { font-weight: 600; }
+.warm .detail { color: var(--muted); font-weight: 400; }
+.warm .go { color: var(--accent); font-weight: 600; white-space: nowrap; }
+.warm .wst { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+.warm > summary .ic { flex: none; }
+.warm .chev { margin-left: auto; }
+.i-half { fill: var(--part); }
+.i-pring { fill: none; stroke: var(--part); stroke-width: 1.8; }
+.warm.w-ok { border-left-color: var(--ok); }
+.warm.w-part { border-left-color: var(--part); }
+.warm.w-wait { border-left-color: var(--hold-ink); }
+.warm.w-non { border-left-color: var(--muted); background: transparent; }
+.warm.w-non .wt { color: var(--muted); }
+.warm:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
 .acts.one { flex-wrap: nowrap; }
 .who { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
@@ -388,6 +407,38 @@ function modePick(day, s) {
   r.appendChild(c); return r;
 }
 
+/* Échauffement attendu avant une séance (2-plan/echauffement.md § 2, provisoire, decisions.md 2026-10-21 (dixième)) :
+   première séance du jour (tennis ou physique, hors annulées) = physique : partie 1, tennis : parties 1 et 2 ;
+   tennis qui suit une autre séance = partie 2 ; le reste, rien. Durées inférées, jamais mesurées. */
+const WARM_URL = 'https://claude.ai/artifact/NqPqPDKpETbDsHsP64r5yF';
+function warmFor(sessions, s) {
+  const live = sessions.filter(x => (x.type === 'tennis' || x.type === 'physique') && x.status !== SKIP);
+  const k = live.indexOf(s);
+  if (k < 0 || !s.start) return null;
+  let title, min;
+  if (k === 0) { title = s.type === 'tennis' ? 'Échauffement complet' : 'Échauffement'; min = s.type === 'physique' ? 10 : 20; }
+  else if (s.type === 'tennis') { title = 'Échauffement'; min = 10; }
+  else return null;
+  const from = mins(s.start) - min, prev = live[k - 1];
+  const when = prev && prev.end && mins(prev.end) > from ? '' : fmtT(String(Math.floor(from / 60)).padStart(2, '0') + ':' + String(from % 60).padStart(2, '0')) + ' – ' + fmtT(s.start);
+  return { title, min, when };
+}
+/* Statut de l'échauffement (question 3c) : s.warm = 'ok' | 'part' | 'non', pas encore alimenté par le registre. Sans lui, ligne neutre. */
+/* Mêmes icônes et couleurs que le statut d'une séance : fait = coche verte, à confirmer = point d'interrogation ambre, pas fait = croix grise. */
+const WARM_ST = { ok: ['done', 'Fait'], part: ['part', 'En partie'], non: ['skipped', 'Pas fait'], wait: ['confirm', 'Fiche à remplir'] };
+ICONS.part = SVG('<circle cx="11" cy="11" r="9.6" class="i-pring"/><path d="M11 4.5a6.5 6.5 0 0 0 0 13z" class="i-half"/>');
+const WARM_FROM = { entier: 'ok', partie: 'part', non: 'non' }; /* valeurs de 4-record/ledgers/sessions-2026.md */
+function warmRow(w, st) {
+  const d = el('details', 'warm' + (st ? ' w-' + st : ''));
+  const sum = el('summary');
+  const t = el('span', 'wt', w.title); t.appendChild(el('span', 'detail', ' · ' + w.min + ' min'));
+  if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', WARM_ST[st][1]); sum.append(ic); }
+  sum.append(t, el('span', 'chev', '▸'));
+  const a = el('a', 'go', '▶ Voir les exercices'); a.href = WARM_URL; a.target = '_blank'; a.rel = 'noopener noreferrer';
+  d.append(sum, a);
+  return d;
+}
+
 /* k = rang de la séance dans la journée (0, 1…), n = nombre de séances avec fiche ce jour-là. */
 function sessionCard(day, s, k, n) {
   const state = stateOf(day, s);
@@ -475,7 +526,10 @@ function renderWeek() {
     const date = el('div', 'date'); date.append(el('span', 'dow', DOW[d.getDay()]), el('span', 'num', String(d.getDate())));
     const slots = el('div', 'slots');
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
-    else { const fs = sessions.filter(x => !NO_FICHE[x.type]); sessions.forEach(s => slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length))); }
+    else {
+      const fs = sessions.filter(x => !NO_FICHE[x.type]);
+      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length)); });
+    }
     if (confirmKey) {
       if (ui.add === day) slots.appendChild(addBox(day, i));
       else {
