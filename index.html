@@ -585,7 +585,7 @@ function renderWeek() {
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
     else {
       const fs = sessions.filter(x => !NO_FICHE[x.type]);
-      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length, sessions)); if (lastStretch(sessions, s) && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type,day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
+      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day < todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length, sessions)); if (day <= todayIso && lastStretch(sessions, s) && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type,day < todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
     }
     if (confirmKey) {
       if (ui.add === day) slots.appendChild(addBox(day, i));
