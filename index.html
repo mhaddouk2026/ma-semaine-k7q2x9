@@ -297,6 +297,7 @@ const canEdit = (day, s) => s.fiche === 'ok' && !!s.sid && day === todayIso && n
    « Séance confirmée » : la page enregistrée se met à jour quelques instants après. Les plafonds ci-dessous sont aussi
    ceux du script `modifier-planning.py` (qui a le dernier mot) : la page les vérifie d'avance pour le dire à Sarra. */
 const CONFIRM_URL = 'https://relais-jotform.mhaddouk.workers.dev/confirmer';
+const CHANGES_URL = 'https://relais-jotform.mhaddouk.workers.dev/changements';
 const ORIGINS = ['Le coach', 'Sarra', 'Douleur'];
 const MAX_H = 16, MAX_DAY = 2;
 let confirmKey = '';
@@ -524,6 +525,14 @@ function addBox(day, di) {
 recent().forEach(r => applyPayload(r.p));
 const start = pickWeek(WEEKS, todayIso);
 let current = start.index;
+/* Les changements faits depuis un autre appareil : le relais les garde 30 minutes (route /changements, même clé). Sans réponse, la page
+   reste telle qu'elle est publiée, plus le rejeu local ci-dessus. */
+if (confirmKey) {
+  fetch(CHANGES_URL, { headers: { 'x-cle': confirmKey } })
+    .then(res => (res.ok ? res.json() : Promise.reject(res.status)))
+    .then(j => { (j.changements || []).forEach(applyPayload); if (j.changements && j.changements.length) renderWeek(); })
+    .catch(() => {});
+}
 
 function renderWeek() {
   const w = WEEKS[current];
