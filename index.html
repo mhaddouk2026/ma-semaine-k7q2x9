@@ -106,8 +106,7 @@ p { margin: 0; }
 .tag { font-size: 12px; font-weight: 600; line-height: 1.2; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
 .tag.f-ok { background: var(--accent-soft); color: var(--accent); }
 .tag.f-skip { background: var(--rest); color: var(--muted); }
-.fiche-ok { display: inline-flex; width: 22px; height: 22px; flex: none; color: var(--accent); }
-.fiche-ok svg, .ibtn svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ibtn svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ibtn { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 44px; height: 44px; padding: 10px; border-radius: 10px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
 .ibtn svg { width: 22px; height: 22px; }
 .ibtn.ok { background: var(--accent); color: var(--accent-ink); }
@@ -383,7 +382,6 @@ const ICON = {
   restore: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4"/></svg>',
 };
 const ibtn = (cls, label, svg, fn) => { const b = btn('ibtn ' + cls, '', fn); b.innerHTML = svg; b.title = label; b.setAttribute('aria-label', label); return b; };
-const ficheOk = () => { const f = el('span', 'fiche-ok'); f.innerHTML = ICON.check; f.title = 'Fiche reçue'; f.setAttribute('role', 'img'); f.setAttribute('aria-label', 'Fiche reçue'); return f; };
 const link = (cls, text, href) => { const a = el('a', cls, text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
 const ident = (day, s) => ({ date: day, type: s.type, start: s.start });
 
@@ -464,7 +462,7 @@ function warmRow(w, st) {
   const d = el('details', 'warm' + (st ? ' w-' + st : ''));
   const sum = el('summary');
   const t = el('span', 'wt', w.title); t.appendChild(el('span', 'detail', ' · ' + w.min + ' min'));
-  if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', WARM_ST[st][1]); sum.append(ic); }
+  if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.title = WARM_ST[st][1]; ic.setAttribute('aria-label', WARM_ST[st][1]); sum.append(ic); }
   sum.append(t, el('span', 'chev', '▸'));
   const a = el('a', 'go', '▶ Voir les exercices'); a.href = WARM_URL; a.target = '_blank'; a.rel = 'noopener noreferrer';
   d.append(sum, a);
@@ -483,7 +481,7 @@ function lastStretch(sessions, s) {
 }
 function stretchRow(type, st) {
   const d = el('div', 'stretch' + (st ? ' w-' + st : ''));
-  if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', WARM_ST[st][1]); d.append(ic); }
+  if (st) { const ic = el('span', 'ic'); ic.innerHTML = ICONS[WARM_ST[st][0]]; ic.setAttribute('role', 'img'); ic.title = WARM_ST[st][1]; ic.setAttribute('aria-label', WARM_ST[st][1]); d.append(ic); }
   d.appendChild(el('span', 'wt', 'Étirements après ' + STRETCH_TYPES[type] + ' · 10 min'));
   return d;
 }
@@ -500,7 +498,6 @@ function sessionCard(day, s, k, n, sessions) {
   if (s.mode && MODES[s.mode]) who.appendChild(el('span', 'mode ' + (s.mode === 'groupe' ? 'g' : 's'), MODES[s.mode]));
   top.appendChild(who);
   if (state === 'skipped') top.appendChild(el('span', 'tag f-skip', 'Annulée'));
-  else if (!NO_FICHE[s.type] && s.fiche === 'ok') top.appendChild(ficheOk());
   body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
   if (confirmKey && !NO_FICHE[s.type] && s.start && !s.mode && state !== 'skipped') body.appendChild(modePick(day, s));
   const acts = actions(day, s, state, k, n, sessions); if (acts) body.appendChild(acts);
