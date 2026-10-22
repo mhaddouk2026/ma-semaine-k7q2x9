@@ -127,7 +127,8 @@ p { margin: 0; }
 .i-pring { fill: none; stroke: var(--part); stroke-width: 1.8; }
 .warm.w-ok { border-left-color: var(--ok); }
 .warm.w-part { border-left-color: var(--part); }
-.warm.w-wait { border-left-color: var(--hold-ink); }
+.warm.w-wait, .warm.w-none { border-left-color: var(--hold-ink); }
+.warm.w-next { border-left-color: var(--muted); }
 .warm.w-non { border-left-color: var(--muted); background: transparent; }
 .warm.w-non .wt { color: var(--muted); }
 .warm:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -135,7 +136,7 @@ p { margin: 0; }
 .stretch .ic { flex: none; }
 .stretch.w-ok { border-left-color: var(--ok); }
 .stretch.w-part { border-left-color: var(--part); }
-.stretch.w-wait { border-left-color: var(--hold-ink); }
+.stretch.w-wait, .stretch.w-none { border-left-color: var(--hold-ink); }
 .stretch.w-non .wt { color: var(--muted); }
 .stretch .wt { font-weight: 600; color: var(--ink); }
 .acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
@@ -455,7 +456,7 @@ function warmFor(sessions, s) {
 }
 /* Statut de l'échauffement (question 3c) : s.warm = 'entier' | 'partie' | 'non' (WARM_FROM), posé par marquer-fiche-recue.py dès la fiche reçue, puis depuis le registre par poser-echauffement.py (le soir). Sans lui, ligne neutre. */
 /* Mêmes icônes et couleurs que le statut d'une séance : fait = coche verte, à confirmer = point d'interrogation ambre, pas fait = croix grise. */
-const WARM_ST = { ok: ['done', 'Fait'], part: ['part', 'En partie'], non: ['skipped', 'Pas fait'], wait: ['confirm', 'Fiche à remplir'] };
+const WARM_ST = { ok: ['done', 'Fait'], part: ['part', 'En partie'], non: ['skipped', 'Pas fait'], wait: ['confirm', 'Fiche à remplir'], none: ['confirm', 'Non renseigné'], next: ['planned', 'Prévu'] };
 ICONS.part = SVG('<circle cx="11" cy="11" r="9.6" class="i-pring"/><path d="M11 4.5a6.5 6.5 0 0 0 0 13z" class="i-half"/>');
 const WARM_FROM = { entier: 'ok', partie: 'part', non: 'non' }; /* valeurs de 4-record/ledgers/sessions-2026.md */
 function warmRow(w, st) {
@@ -583,7 +584,7 @@ function renderWeek() {
     if (sessions.length === 0) slots.appendChild(el('div', 'card rest', 'Repos'));
     else {
       const fs = sessions.filter(x => !NO_FICHE[x.type]);
-      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day <= todayIso ? (WARM_FROM[s.warm] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length, sessions)); if (day <= todayIso && lastStretch(sessions, s) && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type, day <= todayIso ? (WARM_FROM[s.stretch] || (needsFiche(day, s, stateOf(day, s)) ? 'wait' : null)) : null)); });
+      sessions.forEach(s => { const w = day <= todayIso && stateOf(day, s) !== 'skipped' ? warmFor(sessions, s) : null; if (w) slots.appendChild(warmRow(w, day <= todayIso ? (WARM_FROM[s.warm] || (stateOf(day, s) === 'planned' ? 'next' : needsFiche(day, s, stateOf(day, s)) ? 'wait' : 'none')) : null)); slots.appendChild(sessionCard(day, s, fs.indexOf(s), fs.length, sessions)); if (day <= todayIso && lastStretch(sessions, s) && stateOf(day, s) !== 'skipped') slots.appendChild(stretchRow(s.type, day <= todayIso ? (WARM_FROM[s.stretch] || (stateOf(day, s) === 'planned' ? 'next' : needsFiche(day, s, stateOf(day, s)) ? 'wait' : 'none')) : null)); });
     }
     if (confirmKey) {
       if (ui.add === day) slots.appendChild(addBox(day, i));
