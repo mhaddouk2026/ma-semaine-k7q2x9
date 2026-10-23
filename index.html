@@ -381,9 +381,11 @@ const ICON = {
   x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
   trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.8 12.2h9.4L17.5 7"/></svg>',
   restore: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4"/></svg>',
+  fiche: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5zM14.5 3.5V7H18M9.5 12h5M9.5 15.5h5"/></svg>',
 };
 const ibtn = (cls, label, svg, fn) => { const b = btn('ibtn ' + cls, '', fn); b.innerHTML = svg; b.title = label; b.setAttribute('aria-label', label); return b; };
 const link = (cls, text, href) => { const a = el('a', cls, text); a.href = href; a.target = '_blank'; a.rel = 'noopener'; return a; };
+const ilink = (cls, label, svg, href) => { const a = link('ibtn ' + cls, '', href); a.innerHTML = svg; a.title = label; a.setAttribute('aria-label', label); return a; };
 const ident = (day, s) => ({ date: day, type: s.type, start: s.start });
 
 function actions(day, s, st, k, n, sessions) {
@@ -423,7 +425,7 @@ function actions(day, s, st, k, n, sessions) {
     if (confirmKey && (day > todayIso || (day === todayIso && nowMin < EDIT_UNTIL))) box.appendChild(ibtn('', 'Rétablir la séance', ICON.restore, () => run(key, { action: 'retablir', ...ident(day, s) }, 'Séance rétablie.')));
   } else {
     if (NO_FICHE[s.type] && st === 'confirm' && confirmKey) box.appendChild(ibtn('ok', 'Marquer faite', ICON.check, () => run(key, { action: 'faite', ...ident(day, s) }, 'Marquée faite.')));
-    if (needsFiche(day, s, st)) box.appendChild(link('btn fill', 'Remplir la fiche', ficheUrl(day, s, k, n, sessions)));
+    if (needsFiche(day, s, st)) box.appendChild(ilink('ok', 'Remplir la fiche', ICON.fiche, ficheUrl(day, s, k, n, sessions)));
     else if (canEdit(day, s)) box.appendChild(link('btn', 'Modifier la fiche', EDIT_URL + s.sid));
     if (confirmKey && st !== 'done') box.appendChild(ibtn('warn', 'Annuler la séance', ICON.x, () => { ui.open = { key, kind: 'cancel' }; ui.origin = ''; ui.motif = ''; ui.add = null; failed = null; renderWeek(); }));
     if (confirmKey && st === 'planned' && s.fiche !== 'ok') box.appendChild(ibtn('warn', 'Supprimer la séance', ICON.trash, () => { ui.open = { key, kind: 'delete' }; ui.add = null; failed = null; renderWeek(); }));
