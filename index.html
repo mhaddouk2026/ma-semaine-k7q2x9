@@ -65,12 +65,19 @@ p { margin: 0; }
 .seg button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .weekhead { display: flex; flex-direction: column; gap: 12px; }
-.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--rest); border-radius: 12px; }
+.nav { display: grid; grid-template-columns: 44px 1fr 44px; gap: 6px; }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: var(--rest); border-radius: 12px; }
 .seg button {
   min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
-  font: 600 15px/1.1 var(--font-body); cursor: pointer; padding: 0 8px;
+  font: 600 14px/1.1 var(--font-body); cursor: pointer; padding: 0 6px;
 }
 .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.arrow { min-height: 44px; border: 0; border-radius: 12px; background: var(--rest); color: var(--ink); font: 600 22px/1 var(--font-body); cursor: pointer; }
+.arrow:disabled { opacity: .35; cursor: default; }
+.arrow:focus-visible, .back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.rangerow { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.back { border: 0; background: none; color: var(--accent); font: 600 15px var(--font-body); cursor: pointer; padding: 6px 0; }
+.back[hidden] { visibility: hidden; display: block; }
 .range, .notice { color: var(--muted); font-size: 15px; }
 
 .days { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
@@ -183,8 +190,12 @@ textarea { resize: vertical; min-height: 64px; }
   <h1>Ma semaine</h1>
 
   <section class="weekhead">
-    <div class="seg" id="seg" role="group" aria-label="Choisir la semaine"></div>
-    <p class="range" id="range"></p>
+    <div class="nav">
+      <button type="button" class="arrow" id="prev" aria-label="Semaine précédente">‹</button>
+      <div class="seg" id="seg" role="group" aria-label="Choisir la semaine"></div>
+      <button type="button" class="arrow" id="next" aria-label="Semaine suivante">›</button>
+    </div>
+    <div class="rangerow"><p class="range" id="range"></p><button type="button" class="back" id="back" hidden>Aujourd’hui</button></div>
     <p class="total" id="total"></p>
     <p class="notice" id="notice" hidden></p>
     <ol class="days" id="days"></ol>
@@ -215,7 +226,7 @@ const DONE = 'done', PLAN = 'planned', SKIP = 'skipped';
 const S = (type, mode, start, end, status, fiche, motif, sid, warm, stretch) => ({ type, mode, start, end, status, fiche, motif, sid, warm, stretch });
 const P = (type, dur) => ({ type, dur, status: PLAN });
 const WEEKS = [
-  { from: '2026-10-12', label: 'Semaine dernière',
+  { from: '2026-10-12',
     days: [
       [S('tennis', 'groupe', '18:00', '19:00', DONE), S('physique', 'groupe', '19:30', '20:30', DONE)],
       [S('mental', 'groupe', '18:00', '19:00', DONE)],
@@ -224,13 +235,22 @@ const WEEKS = [
       [S('tennis', 'groupe', '18:00', '19:00', DONE, 'ok'), S('physique', 'groupe', '19:30', '20:30', DONE, 'ok')],
       [S('tennis', 'spécifique', '09:00', '10:00', DONE, 'ok'), S('physique', 'spécifique', '13:00', '14:00', DONE, 'ok'), S('kine', null, '15:00', '16:00', DONE)], []
     ] },
-  { from: '2026-10-19', label: 'Cette semaine',
+  { from: '2026-10-19',
     days: [
       [S('physique', 'groupe', '18:30', '19:30', DONE, 'ok'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok')],
       [S('physique', 'spécifique', '15:30', '16:30', DONE, 'ok'), S('mental', null, '18:30', '19:30', SKIP, null, 'Le coach · Pluie'), S('tennis', null, '19:30', '21:00', SKIP, null, 'Le coach · Pluie')],
       [S('kine', null, '13:00', '14:00', DONE), S('physique', 'groupe', '19:00', '20:00', DONE, 'ok'), S('tennis', 'groupe', '20:00', '21:00', DONE, 'ok', null, null, null, 'entier')],
       [S('physique', 'spécifique', '17:00', '18:00', DONE, 'ok', null, '6684978408876828791', null, 'non'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6685105141128719366', null, 'entier')],
       [S('physique', 'groupe', '18:30', '19:30', DONE, 'ok', null, '6685960295217545449'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6685960955217005586', null, 'entier')], [S('physique', 'spécifique', '10:00', '11:00', PLAN), S('kine', null, '12:00', '13:00', DONE)], []
+    ] },
+  { from: '2026-10-26',
+    days: [
+      [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('mental', null, '18:30', '19:30', PLAN)],
+      [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [], []
     ] }
 ];
 
@@ -558,16 +578,31 @@ if (confirmKey) {
     .catch(() => {});
 }
 
+/* Trois boutons fixes autour d'aujourd'hui (dernière, cette semaine, prochaine), ceux qui existent dans WEEKS ; les flèches parcourent tout WEEKS.
+   Aucune semaine proche (page périmée) : un seul bouton, la semaine affichée, nommée par ses dates. */
+const mondayOf = s => addDays(s, -((parse(s).getDay() + 6) % 7));
+const weekOffset = wk => Math.round((parse(wk.from) - parse(mondayOf(todayIso))) / (7 * 864e5));
+const REL = { '-1': 'Semaine dernière', '0': 'Cette semaine', '1': 'Semaine prochaine' };
+function goTo(i) { current = Math.max(0, Math.min(WEEKS.length - 1, i)); ui.open = null; ui.add = null; ui.err = ''; renderWeek(); }
+$('prev').addEventListener('click', () => goTo(current - 1));
+$('next').addEventListener('click', () => goTo(current + 1));
+$('back').addEventListener('click', () => goTo(start.index));
+
 function renderWeek() {
   const w = WEEKS[current];
   const seg = $('seg'); seg.textContent = '';
-  WEEKS.forEach((wk, i) => {
-    const b = el('button', '', wk.label);
+  let shown = WEEKS.map((wk, i) => i).filter(i => REL[weekOffset(WEEKS[i])]);
+  if (!shown.length) shown = [current];
+  shown.forEach(i => {
+    const b = el('button', '', REL[weekOffset(WEEKS[i])] || rangeLabel(WEEKS[i].from));
     b.type = 'button'; b.id = 'seg-' + i;
     b.setAttribute('aria-pressed', String(i === current));
-    b.addEventListener('click', () => { current = i; ui.open = null; ui.add = null; ui.err = ''; renderWeek(); });
+    b.addEventListener('click', () => goTo(i));
     seg.appendChild(b);
   });
+  $('prev').disabled = current <= 0;
+  $('next').disabled = current >= WEEKS.length - 1;
+  $('back').hidden = current === start.index;
   $('range').textContent = rangeLabel(w.from);
   const h = weekHours(w), total = $('total');
   total.textContent = 'Tennis et physique prévus : ' + String(h).replace('.', ',') + ' h sur ' + MAX_H + ' h.';
