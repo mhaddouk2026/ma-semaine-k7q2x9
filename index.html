@@ -71,7 +71,8 @@ p { margin: 0; }
   min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
   font: 600 14px/1.1 var(--font-body); cursor: pointer; padding: 0 6px;
 }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.seg button[aria-pressed="true"], .seg .cur { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.seg .cur { display: flex; align-items: center; justify-content: center; min-height: 44px; font: 600 15px/1.1 var(--font-body); width: 100%; border: 0; text-align: center; color: var(--ink); }
 .arrow { min-height: 44px; border: 0; border-radius: 12px; background: var(--rest); color: var(--ink); font: 600 22px/1 var(--font-body); cursor: pointer; }
 .arrow:disabled { opacity: .35; cursor: default; }
 .arrow:focus-visible, .back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
@@ -192,7 +193,7 @@ textarea { resize: vertical; min-height: 64px; }
   <section class="weekhead">
     <div class="nav">
       <button type="button" class="arrow" id="prev" aria-label="Semaine précédente">‹</button>
-      <div class="seg" id="seg" role="group" aria-label="Choisir la semaine"></div>
+      <div class="seg" id="seg" aria-live="polite"></div>
       <button type="button" class="arrow" id="next" aria-label="Semaine suivante">›</button>
     </div>
     <div class="rangerow"><p class="range" id="range"></p><button type="button" class="back" id="back" hidden>Aujourd’hui</button></div>
@@ -578,11 +579,7 @@ if (confirmKey) {
     .catch(() => {});
 }
 
-/* Trois boutons fixes autour d'aujourd'hui (dernière, cette semaine, prochaine), ceux qui existent dans WEEKS ; les flèches parcourent tout WEEKS.
-   Aucune semaine proche (page périmée) : un seul bouton, la semaine affichée, nommée par ses dates. */
-const mondayOf = s => addDays(s, -((parse(s).getDay() + 6) % 7));
-const weekOffset = wk => Math.round((parse(wk.from) - parse(mondayOf(todayIso))) / (7 * 864e5));
-const REL = { '-1': 'Semaine dernière', '0': 'Cette semaine', '1': 'Semaine prochaine' };
+/* La barre affiche la semaine consultée, dates comprises ; les flèches parcourent WEEKS. */
 function goTo(i) { current = Math.max(0, Math.min(WEEKS.length - 1, i)); ui.open = null; ui.add = null; ui.err = ''; renderWeek(); }
 $('prev').addEventListener('click', () => goTo(current - 1));
 $('next').addEventListener('click', () => goTo(current + 1));
@@ -590,20 +587,21 @@ $('back').addEventListener('click', () => goTo(start.index));
 
 function renderWeek() {
   const w = WEEKS[current];
-  const seg = $('seg'); seg.textContent = '';
-  let shown = WEEKS.map((wk, i) => i).filter(i => REL[weekOffset(WEEKS[i])]);
-  if (!shown.length) shown = [current];
-  shown.forEach(i => {
-    const b = el('button', '', REL[weekOffset(WEEKS[i])] || rangeLabel(WEEKS[i].from));
-    b.type = 'button'; b.id = 'seg-' + i;
-    b.setAttribute('aria-pressed', String(i === current));
-    b.addEventListener('click', () => goTo(i));
-    seg.appendChild(b);
+  const pick = el('input', 'cur');
+  pick.type = 'date';
+  pick.min = WEEKS[0].from;
+  pick.max = addDays(WEEKS[WEEKS.length - 1].from, 6);
+  pick.value = w.from;
+  pick.setAttribute('aria-label', 'Aller à la semaine d’une date');
+  pick.addEventListener('change', () => {
+    const i = WEEKS.findIndex(wk => pick.value >= wk.from && pick.value <= addDays(wk.from, 6));
+    if (i >= 0) goTo(i); else pick.value = w.from;
   });
+  $('seg').replaceChildren(pick);
+  $('range').textContent = rangeLabel(w.from);
   $('prev').disabled = current <= 0;
   $('next').disabled = current >= WEEKS.length - 1;
   $('back').hidden = current === start.index;
-  $('range').textContent = rangeLabel(w.from);
   const h = weekHours(w), total = $('total');
   total.textContent = 'Tennis et physique prévus : ' + String(h).replace('.', ',') + ' h sur ' + MAX_H + ' h.';
   total.className = 'total' + (h > MAX_H ? ' over' : '');
