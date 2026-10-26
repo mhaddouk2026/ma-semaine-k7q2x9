@@ -184,6 +184,43 @@ textarea { resize: vertical; min-height: 64px; }
 .note.hold { background: var(--hold-bg); color: var(--hold-ink); }
 .foot { font-size: 14px; color: var(--muted); }
 
+/* Programme de la séance spécifique (2-plan/programme-specifique.md, recopié par rendre-programme.py) : sur la carte, un dépliant
+   « Au programme » ; sous la semaine, la consigne ; en bas, l'état des huit principes. */
+.prog { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 6px; }
+.prog > summary { display: flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; list-style: none; font-weight: 600; color: var(--accent); font-size: 15px; }
+.prog > summary::-webkit-details-marker { display: none; }
+.prog > summary { flex-wrap: wrap; row-gap: 0; }
+.prog > summary .detail { font-weight: 400; order: 3; flex-basis: 100%; margin-top: -6px; padding-bottom: 4px; }
+.prog > summary .chev { margin-left: auto; transition: transform .15s; }
+.prog[open] > summary .chev { transform: rotate(90deg); }
+.prog .but { font-size: 14px; color: var(--muted); margin: 2px 0 8px; }
+.prog ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; counter-reset: ex; }
+.prog li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 2px 8px; align-items: baseline; font-size: 14px; }
+.prog li::before { counter-increment: ex; content: counter(ex); font: 700 13px/1 var(--font-display); color: var(--accent); background: var(--accent-soft); border-radius: 999px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.prog li .exn { font-weight: 600; }
+.prog li .exm { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.prog li .ext { grid-column: 2 / 4; color: var(--muted); }
+.prog:focus-within > summary { outline: none; }
+.prog > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.consigne { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 15px; display: flex; flex-direction: column; gap: 4px; }
+.consigne .lab { font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
+.consigne[hidden], .principes[hidden] { display: none; }
+.principes { display: flex; flex-direction: column; gap: 10px; }
+.principes .sub { color: var(--muted); font-size: 14px; }
+.plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.plist li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.plist .pn { font: 700 15px/1 var(--font-display); color: var(--muted); text-align: center; }
+.plist .pname { font-weight: 600; min-width: 0; }
+.plist li.p-cours { border: 1.5px solid var(--accent); }
+.plist li.p-cours .pn { color: var(--accent); }
+.plist li.p-eval { background: transparent; border-style: dashed; }
+.plist li.p-eval .pname { color: var(--muted); font-weight: 500; }
+.pst { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.pst.s-acquis { background: var(--ok); color: var(--ok-tick); }
+.pst.s-cours { background: var(--accent); color: var(--accent-ink); }
+.pst.s-travail { background: var(--hold-bg); color: var(--hold-ink); }
+.pst.s-eval { background: var(--rest); color: var(--muted); }
+
 @media (prefers-reduced-motion: no-preference) { .seg button { transition: background .15s; } }
 </style>
 
@@ -199,7 +236,14 @@ textarea { resize: vertical; min-height: 64px; }
     <div class="rangerow"><p class="range" id="range"></p><button type="button" class="back" id="back" hidden>Aujourd’hui</button></div>
     <p class="total" id="total"></p>
     <p class="notice" id="notice" hidden></p>
+    <div class="consigne" id="consigne" hidden></div>
     <ol class="days" id="days"></ol>
+  </section>
+
+  <section class="principes" aria-labelledby="p-title">
+    <h2 id="p-title">Mes principes</h2>
+    <p class="sub" id="p-sub"></p>
+    <ol class="plist" id="plist"></ol>
   </section>
 
   <section class="note hold">
@@ -254,6 +298,10 @@ const WEEKS = [
       [], []
     ] }
 ];
+
+/* PROGRAMME — début. Écrit par 2-plan/rendre-programme.py depuis programme-specifique.md et 4-record/ledgers/principes.md : ne pas éditer ici. */
+const PROGRAMME = {"seances":{"2026-11-02":{"nom":"Diagnostic 1","but":"Faire passer les épreuves des principes 1, 2, 4 et la partie « défense et échange » du principe 3, filmées. On n'enseigne rien : on regarde.","consigne":"Cette semaine, on regarde comment tu joues : joue comme d'habitude, sans chercher à bien faire pour la caméra.","exercices":[{"n":1,"nom":"Échanges progressifs","texte":"mi-court, puis fond de court","min":10},{"n":2,"nom":"Épreuve du principe 1, Jeu de pieds","texte":"huit cônes autour du centre de la ligne de fond ; une série à vide, une série en frappant, l'entraîneur distribue ; retour au centre après chaque coup (annexe 5 § 5)","min":12},{"n":3,"nom":"Épreuve du principe 2, Théorie des zones","texte":"bande à 1,50 m au-dessus du filet ; 3 séries de 8 balles envoyées n'importe où ; Sarra dit sa phase à voix haute en frappant : « défense », « échange », « attaque »","min":12},{"n":4,"nom":"Épreuve du principe 4, Consistance","texte":"bande à 1,50 m, carrés d'épreuve ; 6 séries de 8 coups en échange avec l'entraîneur : croisé, parallèle, puis les séries 3 à 5 écrites d'avance, la 6 libre","min":20},{"n":5,"nom":"Épreuve du principe 3, partie défense et échange","texte":"bande à 1 m, carrés d'épreuve ; patron croisé, changements de patron, balles puissantes à ralentir, vers le coup droit puis vers le revers : 2 séries de 8 chaque ; puis 2 séries de 10 retours, l'entraîneur sert depuis le carré de service","min":25}],"total":79},"2026-11-09":{"nom":"Diagnostic 2","but":"Faire passer les épreuves des principes 5, 6, 7 et 8, filmées.","consigne":"Encore une semaine où on regarde : joue comme d'habitude.","exercices":[{"n":1,"nom":"Échanges progressifs","texte":"mi-court, puis fond de court","min":8},{"n":2,"nom":"Épreuve du principe 5, Variété","texte":"bande à 1 m ; 2 séries de 8 en patron croisé, sans jouer deux fois de suite le même coup : lifté haut, court, coupé, angle ; série 1 en coup droit, série 2 en revers ; Sarra annonce son coup","min":8},{"n":3,"nom":"Épreuve du principe 7, Presser l'adversaire","texte":"s'inverser, 2 séries de 8 ; faire perdre le court par la balle lourde, l'angle, l'amortie après une balle profonde, 3 séries de 8 ; la zone faible annoncée, 10 points","min":25},{"n":4,"nom":"Épreuve du principe 8, Exploiter les occasions d'attaque","texte":"l'entraîneur défend chaque point ; 3 séries de 10 points : balle courte, court ouvert, adversaire très reculée ; Sarra attaque et monte au filet. Pas de smash : une balle haute au filet se laisse passer","min":22},{"n":5,"nom":"Épreuve du principe 6, Urgence, sans partenaire","texte":"l'entraîneur joue la volleyeuse : il envoie vers Sarra, monte au filet, le point se joue ; 5 passings croisés, 5 parallèles, 5 lobs ; puis 5 coups d'urgence de chaque côté, depuis le coin","min":17}],"total":80},"2026-11-16":{"nom":"Jeu de pieds 1","but":"Sous-principes : position d'attente, techniques de réaction. Points clés : la position d'attente tenue toute la séance — appuis plus écartés que les épaules, jambes fléchies à environ 130°, poids sur l'avant des pieds, dos droit, raquette devant ; le split step (saut d'allègement), fait juste au moment où l'adversaire frappe.","consigne":"Dans tous les points joués en groupe et au match de samedi : split step au moment où l'adversaire frappe, sinon tu comptes le point pour toi comme perdu. Et tu ne commentes pas tes coups.","exercices":[{"n":1,"nom":"Échanges progressifs","texte":"mi-court, puis fond, en position d'attente entre chaque balle","min":10},{"n":2,"nom":"Saut et ombres","texte":"6 cônes bas en ligne, 20 cm derrière le centre de la ligne de fond ; depuis la position d'attente, split step vers les cônes, ombre de coup droit à droite, retour, ombre de revers à gauche ; pas courts et rapides, à fond ; 6 répétitions × 3 séries, repos 3 fois la durée de l'effort","min":8},{"n":3,"nom":"Saut et coup droit","texte":"l'entraîneur au panier, 2 m à l'intérieur du court, face aux cônes ; même action, en frappant, côté coup droit ; ne pas juger ses coups ; 6 × 3, repos 1:3","min":10},{"n":4,"nom":"Saut et revers","texte":"même chose côté revers ; 6 × 3, repos 1:3","min":10},{"n":5,"nom":"Points à règle","texte":"l'entraîneur met la balle en jeu ; position d'attente correcte et split step au moment où l'adversaire frappe, sinon le point est perdu ; 2 jeux décisifs, repos 1:3","min":15},{"n":6,"nom":"Retour et split step","texte":"l'entraîneur sert à vitesse moyenne depuis la ligne de service ; Sarra retourne et fait son split step au moment où il frappe ; le point ne se joue pas ; 5 retours × 4 séries, repos 1:2","min":8},{"n":7,"nom":"Points à règle, avec mise en jeu","texte":"même règle qu'à l'exercice 5 ; mise en jeu par le service s'il est autorisé, sinon d'un coup droit après rebond ; 2 jeux décisifs ; l'entraîneur arrête le jeu pour corriger une décision","min":15}],"total":76},"2026-11-23":{"nom":"Jeu de pieds 2","but":"Sous-principes : position de frappe, avec les techniques de réaction initiale. Points clés : quand Sarra a le temps, position fermée ou neutre ; quand elle ne l'a pas, semi-ouverte ou ouverte ; le premier appui par la rotation du pied intérieur ; le pas croisé par derrière pour le coup droit inversé (le coup droit joué en tournant autour de son revers).","consigne":"Dans les points joués en groupe et au match : pieds placés selon le temps que tu as — fermés ou neutres si tu as le temps, ouverts sinon — et toujours le split step de la semaine dernière.","exercices":[{"n":1,"nom":"Échanges avec la règle de la semaine passée","texte":"fond de court ; split step à chaque frappe de l'entraîneur","min":10},{"n":2,"nom":"Positions de frappe","texte":"3 cônes sur la ligne de fond, au milieu et à 2 m de chaque côté ; l'entraîneur envoie 2 balles sur le cône droit : deux coups droits, le premier en position neutre, le second en semi-ouverte, sans se déplacer de plus d'un mètre ; puis le cône central, puis le gauche en revers ; 4 répétitions, repos 1:3","min":10},{"n":3,"nom":"Réaction initiale","texte":"derrière la ligne de fond ; 6 balles à environ 2 m du centre, coup droit et revers ; rotation du pied intérieur, position neutre si elle a le temps, semi-ouverte sinon ; 4 répétitions, repos 1:3","min":10},{"n":4,"nom":"Coups droits inversés","texte":"un cône à 1,50 m à gauche, en diagonale vers l'intérieur du court ; 6 coups droits inversés avec le pas croisé par derrière, frappe à l'extérieur du cône en position neutre ou fermée, retour au centre par petits pas latéraux ; 3 répétitions, repos 1:3","min":10},{"n":5,"nom":"Coups en course","texte":"4 balles dans les coins, droit et gauche ; rotation du pied intérieur pour le premier coup, sprint latéral pour les suivants, frappe en semi-ouverte ; 4 répétitions, repos 1:3","min":10},{"n":6,"nom":"Mise en jeu puis un coup","texte":"Sarra met en jeu (service s'il est autorisé et compté, sinon coup droit après rebond) ; l'entraîneur renvoie une balle proche, puis à 2 m, puis à plus de 2 m ; split step et position de frappe adaptée à chaque fois ; 6 répétitions × 3 séries, repos 1:3","min":12},{"n":7,"nom":"Jeux décisifs à règle","texte":"split step et position de frappe adaptée, sinon le point est perdu ; 2 jeux décisifs","min":15}],"total":77},"2026-11-30":{"nom":"Jeu de pieds 3","but":"Sous-principe : récupérer le court. Points clés : pas latéraux sur une courte distance ; pas croisé devant puis deux pas latéraux sur une longue distance ; pas latéraux en diagonale vers l'avant ou l'arrière ; toujours finir par un split step. Puis l'épreuve du principe 1.","consigne":"Après chaque coup, tu reviens et tu finis par un split step avant la frappe de l'adversaire. Si tu ne le fais pas, le point est perdu pour toi.","exercices":[{"n":1,"nom":"Échanges avec les règles des deux semaines passées","texte":"split step, position de frappe adaptée","min":8},{"n":2,"nom":"Balles proches et split step","texte":"Sarra 50 cm derrière la ligne de fond, au centre ; l'entraîneur au panier 1 m à l'intérieur du court ; 6 balles à 1 m d'elle, coup droit ou revers ; après chaque frappe, retour au centre par pas latéraux et split step ; 6 répétitions × 3 séries, la première en ombres ; repos 1:3","min":12},{"n":3,"nom":"Balles éloignées et split step","texte":"4 cônes sur la ligne de fond, à 1,50 m et à 3 m du centre ; les proches comme à l'exercice 2, puis les éloignés en course, récupération par un pas croisé devant et deux pas latéraux, split step au centre ; 4 répétitions, 2 en ombres et 2 en frappant ; repos 1:3","min":10},{"n":4,"nom":"Balles courtes et balles profondes","texte":"2 cônes à 1,50 m en diagonale devant le centre, 2 derrière ; pas latéraux en diagonale vers la balle, coup en position fermée ou neutre, récupération en diagonale, split step ; 2 répétitions en ombres, 2 en frappant ; repos 1:3","min":10},{"n":5,"nom":"Épreuve du principe 1, filmée","texte":"les huit cônes de l'épreuve (annexe 5 § 5) : une série à vide, une série en frappant, l'entraîneur distribue ; retour au centre après chaque coup. Elle remplace l'exercice « tous les déplacements » de la séance type 3","min":12},{"n":6,"nom":"Demi-set à règle","texte":"mise en jeu par le service s'il est autorisé et compté, sinon d'un coup droit après rebond ; un split step ou une récupération manqués font perdre le point","min":20}],"total":72}},"principes":[{"n":1,"nom":"Jeu de pieds","etat":"à évaluer","date":""},{"n":2,"nom":"Théorie des zones","etat":"à évaluer","date":""},{"n":3,"nom":"Géométrie et bissectrice","etat":"à évaluer","date":""},{"n":4,"nom":"Consistance","etat":"à évaluer","date":""},{"n":5,"nom":"Variété","etat":"à évaluer","date":""},{"n":6,"nom":"Urgence","etat":"à évaluer","date":""},{"n":7,"nom":"Presser l'adversaire","etat":"à évaluer","date":""},{"n":8,"nom":"Exploiter les occasions d'attaque","etat":"à évaluer","date":""}]};
+/* PROGRAMME — fin */
 
 /* Dates : jour civil local, sans heure. */
 const DOW = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
@@ -510,6 +558,49 @@ function stretchRow(type, st) {
   return d;
 }
 
+/* Programme de la séance spécifique (decisions.md 2026-10-23 (deuxième)) : le contenu ne s'affiche que sur une séance de tennis « spécifique »
+   du planning, à la date que lui donne programme-specifique.md § 4 ; une séance déplacée se déplace dans le .md, puis rendre-programme.py. */
+const progFor = (day, s) => s.type === 'tennis' && s.mode === 'spécifique' ? PROGRAMME.seances[day] || null : null;
+function progRow(p) {
+  const d = el('details', 'prog'), sum = el('summary');
+  sum.append(el('span', '', 'Au programme'), el('span', 'detail', p.nom + ' · ' + p.total + ' min'), el('span', 'chev', '▸'));
+  d.appendChild(sum);
+  if (p.but) d.appendChild(el('p', 'but', p.but));
+  const ol = el('ol');
+  p.exercices.forEach(x => {
+    const li = el('li');
+    li.append(el('span', 'exn', x.nom), el('span', 'exm', x.min + ' min'));
+    if (x.texte) li.appendChild(el('span', 'ext', x.texte));
+    ol.appendChild(li);
+  });
+  d.appendChild(ol);
+  return d;
+}
+/* La consigne de la semaine : celle de la séance spécifique de la semaine affichée, si elle est au planning et pas annulée. */
+function consigneOf(w) {
+  for (let i = 0; i < 7; i++) {
+    const day = addDays(w.from, i), p = PROGRAMME.seances[day];
+    if (p && p.consigne && (w.days[i] || []).some(s => progFor(day, s) && s.status !== SKIP)) return p;
+  }
+  return null;
+}
+const P_STATE = { 'acquis': ['s-acquis', 'Acquis', ''], 'en cours': ['s-cours', 'En cours', 'p-cours'], 'à travailler': ['s-travail', 'À travailler', ''], 'à évaluer': ['s-eval', 'À évaluer', 'p-eval'] };
+function renderPrincipes() {
+  const list = $('plist'); list.textContent = '';
+  const ps = PROGRAMME.principes || [];
+  ps.forEach(p => {
+    const st = P_STATE[p.etat] || P_STATE['à évaluer'];
+    const li = el('li', st[2]);
+    li.append(el('span', 'pn', String(p.n)), el('span', 'pname', p.nom), el('span', 'pst ' + st[0], st[1]));
+    list.appendChild(li);
+  });
+  const n = ps.filter(p => p.etat === 'acquis').length, cur = ps.find(p => p.etat === 'en cours');
+  $('p-sub').textContent = ps.every(p => p.etat === 'à évaluer')
+    ? 'Pas encore évalués : on commence par deux séances où on regarde comment tu joues.'
+    : 'Acquis : ' + n + ' sur 8.' + (cur ? ' En ce moment : ' + cur.nom + '.' : '');
+  list.closest('section').hidden = !ps.length;
+}
+
 /* k = rang de la séance dans la journée (0, 1…), n = nombre de séances avec fiche ce jour-là. */
 function sessionCard(day, s, k, n, sessions) {
   const state = stateOf(day, s);
@@ -523,6 +614,7 @@ function sessionCard(day, s, k, n, sessions) {
   top.appendChild(who);
   if (state === 'skipped') top.appendChild(el('span', 'tag f-skip', 'Annulée'));
   body.append(top, el('p', 'detail', state === 'skipped' && s.motif ? s.motif : detail(s)));
+  const pg = state !== 'skipped' ? progFor(day, s) : null; if (pg) body.appendChild(progRow(pg));
   if (confirmKey && !NO_FICHE[s.type] && s.start && !s.mode && state !== 'skipped') body.appendChild(modePick(day, s));
   const acts = actions(day, s, state, k, n, sessions); if (acts) body.appendChild(acts);
   card.append(ic, body);
@@ -610,6 +702,9 @@ function renderWeek() {
   notice.hidden = start.where === 'in';
   if (start.where === 'after') notice.textContent = 'Le planning s’arrête le ' + longDate(last) + '. Papa le met à jour.';
   if (start.where === 'before') notice.textContent = 'Le planning commence le ' + longDate(WEEKS[0].from) + '.';
+  const cons = $('consigne'), cp = consigneOf(w);
+  cons.hidden = !cp; cons.textContent = '';
+  if (cp) cons.append(el('span', 'lab', 'Ta consigne cette semaine'), el('p', '', cp.consigne));
   const list = $('days'); list.textContent = '';
   w.days.forEach((sessions, i) => {
     const day = addDays(w.from, i), d = parse(day);
@@ -633,6 +728,7 @@ function renderWeek() {
   });
 }
 $('foot').textContent = 'Mis à jour le ' + longDate(UPDATED) + '.';
+renderPrincipes();
 renderWeek();
 /* Une page laissée ouverte suit l'heure : une séance qui se termine passe « à confirmer » et ouvre sa fiche sans recharger.
    On ne redessine pas pendant qu'un panneau est ouvert, pour ne pas faire perdre le texte en cours de saisie. */
