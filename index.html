@@ -224,7 +224,7 @@ textarea { resize: vertical; min-height: 64px; }
    Une séance 'planned' dont l’heure de fin est passée s’affiche « à confirmer » toute seule : jamais « faite » par défaut (decisions.md 2026-10-18 (deuxième)).
    fiche : 'ok' quand la fiche est reçue (registre des séances, marque Jotform). Toute séance terminée à partir de
    FORM_FROM sans 'ok' affiche le bouton « Remplir la fiche », qui ouvre le formulaire. Heures : 'HH:MM', ou 'dur' si l’heure n’est pas fixée. */
-const UPDATED = '2026-10-29';
+const UPDATED = '2026-10-30';
 const FORM_URL = 'https://form.jotform.com/262845609478068';
 const FORM_FROM = '2026-10-15'; /* mise en service du formulaire */
 const NO_FICHE = { mental: true, kine: true }; /* types sans fiche : ni étiquette ni lien (Mourad, 2026-10-16, pour l’instant) */
@@ -255,7 +255,7 @@ const WEEKS = [
       [S('tennis', 'spécifique', '10:30', '12:00', DONE, 'ok', null, '6689093050903248727', 'entier', 'entier', 'Yassine'), S('mental', null, '18:30', '19:30', DONE), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6689412528417996627', null, 'entier')],
       [S('physique', 'groupe', '18:30', '19:30', DONE, 'ok', null, '6690271808415018902'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6690272448415737370', null, 'entier')],
       [S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6691137978018395115', 'entier', 'entier')],
-      [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('physique', 'groupe', '18:30', '19:30', DONE, 'ok', null, '6692006972211552342'), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
       [], []
     ] }
 ];
