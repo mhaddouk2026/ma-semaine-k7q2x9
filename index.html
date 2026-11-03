@@ -299,10 +299,13 @@ function pickWeek(weeks, today) {
 /* Séances */
 const TYPES = { tennis: 'Tennis', physique: 'Physique', mental: 'Mental', kine: 'Kiné' };
 const MODES = { 'groupe': 'Groupe', 'spécifique': 'Spécifique' };
-/* Coach habituel (Mourad, 2026-10-27 et 28) : toute séance spécifique → Omar ; tennis de groupe → Yassine ; physique de groupe → Dhia ; kiné → Ahed ; mental → Aya.
-   Un autre coach un jour donné s’écrit dans la séance (11ᵉ argument de S) et l’emporte. Affiché seulement au toucher de la séance. */
-const COACH_BY = { kine: 'Ahed', mental: 'Aya' }, COACH_SPEC = 'Omar', COACH_GROUP = { tennis: 'Yassine', physique: 'Dhia' };
-const coachOf = s => s.coach || (s.mode === 'spécifique' ? COACH_SPEC : s.mode === 'groupe' ? COACH_GROUP[s.type] : COACH_BY[s.type]) || null;
+/* Coach habituel (Mourad, 2026-10-27 et 28) : physique spécifique → Omar ; tennis de groupe → Yassine ; physique de groupe → Dhia ; kiné → Ahed ; mental → Aya.
+   Le tennis spécifique n’a pas de coach habituel : il se choisit à l’ajout, ou en passant la séance en spécifique, parmi COACHS_TENNIS_SPEC
+   (Mourad, 2026-11-03). Le coach s’écrit dans la séance (11ᵉ argument de S) et l’emporte. Affiché seulement au toucher de la séance. */
+const COACH_BY = { kine: 'Ahed', mental: 'Aya' }, COACH_SPEC = { physique: 'Omar' }, COACH_GROUP = { tennis: 'Yassine', physique: 'Dhia' };
+const COACHS_TENNIS_SPEC = ['Hassen', 'Nabil', 'Yassine'];
+const choisitCoach = (type, mode) => type === 'tennis' && mode === 'spécifique';
+const coachOf = s => s.coach || (s.mode === 'spécifique' ? COACH_SPEC[s.type] : s.mode === 'groupe' ? COACH_GROUP[s.type] : COACH_BY[s.type]) || null;
 /* Formulaire : noms uniques des champs et textes exacts des options (lus sur le formulaire en ligne le 2026-10-16).
    Un type absent d'ici (mental) n'est pas prérempli ; au-delà de deux séances le même jour, le rang non plus. */
 const FORM_TYPE = { tennis: 'Tennis (entraînement)', physique: 'Physique' };
@@ -363,7 +366,7 @@ try {
   confirmKey = localStorage.getItem('cle-confirmer') || '';
 } catch (e) { confirmKey = ''; }
 const coachShown = new Set(); /* séances dont le coach est déplié : survit au redessin de la page */
-const ui = { open: null, origin: '', motif: '', add: null, addType: 'tennis', addMode: 'groupe', start: '19:30', end: '21:00', err: '' };
+const ui = { open: null, origin: '', motif: '', add: null, addType: 'tennis', addMode: 'groupe', addCoach: COACHS_TENNIS_SPEC[0], modeFor: null, start: '19:30', end: '21:00', err: '' };
 let failed = null, toastTimer;
 const keyOf = (day, s) => day + s.type + s.start;
 const hoursOf = s => (mins(s.end) - mins(s.start)) / 60;
@@ -385,13 +388,14 @@ function applyPayload(p) {
   if (p.action === 'ajouter') {
     if (s) return;
     const n = { type: p.type, mode: p.mode || null, start: p.start, end: p.end, status: PLAN };
+    if (p.coach) n.coach = p.coach;
     list.push(n); list.sort((a, b) => (a.start || '99:99').localeCompare(b.start || '99:99')); return;
   }
   if (!s) return;
   if (p.action === 'annulee') { s.status = SKIP; s.motif = [p.origine, p.motif].filter(Boolean).join(' · '); }
   else if (p.action === 'retablir') { s.status = PLAN; delete s.motif; }
   else if (p.action === 'faite') s.status = DONE;
-  else if (p.action === 'mode') s.mode = p.mode;
+  else if (p.action === 'mode') { s.mode = p.mode; if (p.coach) s.coach = p.coach; else delete s.coach; }
   else if (p.action === 'supprimer') w.days[di] = list.filter(x => x !== s);
 }
 function recent() {
@@ -485,9 +489,19 @@ function actions(day, s, st, k, n, sessions) {
 
 /* Groupe ou spécifique, quand le planning ne le dit pas encore. */
 function modePick(day, s) {
-  const r = el('div', 'pick'); r.appendChild(el('span', 'detail', 'Mode ?'));
+  const k = keyOf(day, s), r = el('div', 'pick');
   const c = el('div', 'chips');
-  Object.keys(MODES).forEach(m => c.appendChild(btn('', MODES[m], () => run(keyOf(day, s), { action: 'mode', ...ident(day, s), mode: m }, 'Mode noté.'))));
+  if (ui.modeFor === k) {
+    r.appendChild(el('span', 'detail', 'Avec qui ?'));
+    COACHS_TENNIS_SPEC.forEach(n => c.appendChild(btn('', n, () => { ui.modeFor = null; run(k, { action: 'mode', ...ident(day, s), mode: 'spécifique', coach: n }, 'Mode noté.'); })));
+    c.appendChild(btn('quiet', 'Retour', () => { ui.modeFor = null; renderWeek(); }));
+    r.appendChild(c); return r;
+  }
+  r.appendChild(el('span', 'detail', 'Mode ?'));
+  Object.keys(MODES).forEach(m => c.appendChild(btn('', MODES[m], () => {
+    if (choisitCoach(s.type, m)) { ui.modeFor = k; return renderWeek(); }
+    run(k, { action: 'mode', ...ident(day, s), mode: m }, 'Mode noté.');
+  })));
   r.appendChild(c); return r;
 }
 
@@ -585,6 +599,12 @@ function addBox(day, di) {
     Object.keys(MODES).forEach(x => { const b = btn('', MODES[x], () => { ui.addMode = x; renderWeek(); }); b.setAttribute('aria-pressed', String(ui.addMode === x)); m.appendChild(b); });
     p.appendChild(m);
   }
+  if (choisitCoach(ui.addType, ui.addMode)) {
+    p.appendChild(el('span', 'lab', 'Coach'));
+    const c = el('div', 'chips');
+    COACHS_TENNIS_SPEC.forEach(x => { const b = btn('', x, () => { ui.addCoach = x; renderWeek(); }); b.setAttribute('aria-pressed', String(ui.addCoach === x)); c.appendChild(b); });
+    p.appendChild(c);
+  }
   const tm = el('div', 'times');
   [['Début', 'start'], ['Fin', 'end']].forEach(([l, f]) => {
     const d = el('div'), lab = el('label', '', l); lab.htmlFor = 'add-' + f;
@@ -604,6 +624,7 @@ function addBox(day, di) {
     if (withFiche && weekHours(w) + hoursOf(s) > MAX_H) { ui.err = 'Ça dépasse ' + MAX_H + ' h de tennis et physique cette semaine. Parles-en à Papa.'; return renderWeek(); }
     const payload = { action: 'ajouter', date: day, type: s.type, start: s.start, end: s.end };
     if (withFiche) payload.mode = s.mode;
+    if (choisitCoach(s.type, s.mode)) payload.coach = ui.addCoach;
     run(key, payload, 'Séance ajoutée. Papa est prévenu.');
   }), btn('quiet', 'Retour', () => { ui.add = null; ui.err = ''; renderWeek(); }));
   p.appendChild(row); box.appendChild(p); return box;
