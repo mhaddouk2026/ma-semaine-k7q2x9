@@ -270,9 +270,17 @@ const WEEKS = [
     days: [
       [S('physique', 'groupe', '18:30', '19:30', DONE, 'ok', null, '6700640473567457013'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6700641333566203716', null, 'entier')],
       [S('mental', null, '18:30', '19:30', DONE), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6701528886681454796', 'entier', 'entier')],
-      [S('physique', 'groupe', '18:30', '19:30', DONE, 'ok'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, null, null, 'entier')],
+      [S('physique', 'spécifique', '13:30', '14:30', DONE), S('physique', 'groupe', '18:30', '19:30', DONE, 'ok'), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, null, null, 'entier')],
       [S('tennis', 'groupe', '19:30', '21:00', DONE)],
       [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', DONE, 'ok', null, '6704104172515595085', null, 'entier')], [], [S('tennis', 'spécifique', '13:00', '15:00', PLAN, null, null, null, null, null, 'Hassen')]
+    ] },
+  { from: '2026-11-16',
+    days: [
+      [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('mental', null, '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('physique', 'groupe', '18:30', '19:30', PLAN), S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('tennis', 'groupe', '19:30', '21:00', PLAN)],
+      [S('tennis', 'groupe', '19:30', '21:00', PLAN)], [], []
     ] }
 ];
 
@@ -363,7 +371,7 @@ const canEdit = (day, s) => s.fiche === 'ok' && !!s.sid && day === todayIso && n
 const CONFIRM_URL = 'https://relais-jotform.mhaddouk.workers.dev/confirmer';
 const CHANGES_URL = 'https://relais-jotform.mhaddouk.workers.dev/changements';
 const ORIGINS = ['Le coach', 'Sarra', 'Douleur'];
-const MAX_H = 16, MAX_DAY = 2;
+const MAX_H = 16;
 let confirmKey = '';
 try {
   const m = /[#&]k=([^&]+)/.exec(location.hash);
@@ -625,7 +633,6 @@ function addBox(day, di) {
     if (!ui.start || !ui.end || mins(ui.end) <= mins(ui.start)) { ui.err = 'L’heure de fin doit être après le début.'; return renderWeek(); }
     if (list.some(x => x.type === ui.addType && x.start === ui.start)) { ui.err = 'Cette séance existe déjà.'; return renderWeek(); }
     const s = { type: ui.addType, mode: withFiche ? ui.addMode : null, start: ui.start, end: ui.end, status: PLAN };
-    if (withFiche && list.filter(x => !NO_FICHE[x.type] && x.status !== SKIP).length >= MAX_DAY) { ui.err = 'Déjà ' + MAX_DAY + ' séances de tennis ou physique ce jour-là.'; return renderWeek(); }
     if (withFiche && weekHours(w) + hoursOf(s) > MAX_H) { ui.err = 'Ça dépasse ' + MAX_H + ' h de tennis et physique cette semaine. Parles-en à Papa.'; return renderWeek(); }
     const payload = { action: 'ajouter', date: day, type: s.type, start: s.start, end: s.end };
     if (withFiche) payload.mode = s.mode;
